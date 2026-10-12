@@ -1,0 +1,182 @@
+---
+/**
+ * Reseñas auténticas de Google y Booksy. Sin reseñas verificadas no se muestra
+ * ningún testimonio ni puntuación: solo enlaces a las fuentes (si existen) y,
+ * en desarrollo, huecos etiquetados.
+ */
+import Icon from '../ui/Icon.astro';
+import Pending from '../ui/Pending.astro';
+import LavaSplatter from '../lava/LavaSplatter.astro';
+import { reviews, SOURCE_LABEL, type ReviewSource } from '@/data/reviews';
+import { site } from '@/config/site';
+import { valueOf, SHOW_PENDING } from '@/lib/pending';
+
+const sources: Array<{ id: ReviewSource; url?: string; field: string }> = [
+  { id: 'google', url: valueOf(site.googleReviewsUrl), field: 'googleReviewsUrl' },
+  { id: 'booksy', url: valueOf(site.booksyReviewsUrl), field: 'booksyReviewsUrl' },
+];
+const dateFmt = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+---
+
+<section id="resenas" class="reviews section surface-light" aria-labelledby="reviews-title">
+  <div class="wrap">
+    <header class="reviews-head">
+      <p class="eyebrow" data-reveal="rise">Reseñas</p>
+      <h2 id="reviews-title" class="h2" data-reveal="lines">
+        <span class="line-mask"><span>Lo que dicen </span></span>
+        <span class="line-mask"><span>nuestros clientes. </span></span>
+      </h2>
+      <LavaSplatter class="reviews-splat" seed={41} />
+    </header>
+
+    <div class="reviews-cols">
+      {
+        sources.map((src) => {
+          const list = reviews.filter((r) => r.source === src.id);
+          return (
+            <article class="source" aria-labelledby={`src-${src.id}`} data-reveal="rise">
+              <header class="source-head">
+                <h3 id={`src-${src.id}`} class="source-name">
+                  {SOURCE_LABEL[src.id]}
+                </h3>
+                {src.url ? (
+                  <a class="link-arrow" href={src.url} target="_blank" rel="noopener noreferrer">
+                    Ver todas <Icon name="arrow" class="arrow" />
+                    <span class="sr-only">las reseñas en {SOURCE_LABEL[src.id]} (pestaña nueva)</span>
+                  </a>
+                ) : (
+                  <Pending label={src.field} />
+                )}
+              </header>
+
+              {list.length > 0 ? (
+                <ul class="quotes">
+                  {list.map((r) => (
+                    <li>
+                      <blockquote class="quote">
+                        {r.rating !== undefined && (
+                          <p class="stars" aria-label={`Valoración: ${r.rating} de 5`}>
+                            {Array.from({ length: 5 }, (_, k) => (
+                              <Icon name="star" filled={k < r.rating!} class={k < r.rating! ? 'on' : 'off'} />
+                            ))}
+                          </p>
+                        )}
+                        <p class="quote-text">{r.text}</p>
+                        <footer class="quote-meta">
+                          — {r.author}
+                          {r.date && <span> · {dateFmt.format(new Date(r.date))}</span>}
+                        </footer>
+                      </blockquote>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                SHOW_PENDING && (
+                  <div class="quote quote--pending">
+                    <p class="quote-text">Aquí irán reseñas reales copiadas de {SOURCE_LABEL[src.id]}: texto, autor, fecha y puntuación originales.</p>
+                    <Pending label={`reseñas verificadas de ${SOURCE_LABEL[src.id]} (src/data/reviews.ts)`} />
+                  </div>
+                )
+              )}
+            </article>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .reviews-head {
+    position: relative;
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+  .reviews-head .h2 {
+    margin-top: 1.25rem;
+  }
+  .reviews-splat {
+    position: absolute;
+    right: 8%;
+    top: -1rem;
+    width: clamp(5rem, 9vw, 8rem);
+  }
+  .reviews-cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4vw, 4rem);
+  }
+  .source-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--c-ink);
+  }
+  .source-name {
+    font-size: var(--fs-h3);
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .quotes {
+    display: grid;
+  }
+  .quote {
+    position: relative;
+    margin: 0;
+    padding: 2rem 0 2rem 3.2rem;
+    border-bottom: 1px solid var(--c-line-light);
+  }
+  .quote::before {
+    content: '“';
+    position: absolute;
+    left: 0;
+    top: 1.1rem;
+    font-size: 4.5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--c-lava);
+  }
+  .quote-text {
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+  }
+  .quote-meta {
+    margin-top: 1rem;
+    color: var(--c-ash-ink);
+    font-size: var(--fs-small);
+    font-weight: 600;
+  }
+  .stars {
+    display: flex;
+    gap: 0.2rem;
+    margin-bottom: 0.75rem;
+  }
+  .stars :global(.icon) {
+    width: 16px;
+    height: 16px;
+  }
+  .stars :global(.on) {
+    color: var(--c-lava-ink);
+  }
+  .stars :global(.off) {
+    color: var(--c-ash-ink);
+  }
+  .quote--pending {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    color: var(--c-ash-ink);
+  }
+  .quote--pending::before {
+    opacity: 0.35;
+  }
+
+  @media (max-width: 799px) {
+    .reviews-cols {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

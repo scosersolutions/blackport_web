@@ -1,0 +1,58 @@
+---
+/** Brochazo diagonal de pintura roja con goteos y salpicaduras finas. */
+import { slash, type SlashOptions } from '@/lib/lava';
+import { scopeAttrs } from '@/lib/scope';
+
+interface Props extends SlashOptions {
+  class?: string;
+}
+
+const { class: className, ...rest } = Astro.props;
+const scope = scopeAttrs(rest);
+const opts = Object.fromEntries(Object.entries(rest).filter(([k]) => !k.startsWith('data-'))) as unknown as SlashOptions;
+const s = slash(opts);
+const gid = `ls-${opts.seed}`;
+---
+
+<svg
+  class:list={['lava-slash', className]}
+  viewBox={`0 0 ${s.width} ${s.height}`}
+  aria-hidden="true"
+  focusable="false"
+  data-lava
+  {...scope}
+>
+  <defs>
+    <linearGradient id={gid} x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="var(--c-lava-deep)" />
+      <stop offset="0.35" stop-color="var(--c-lava)" />
+      <stop offset="1" stop-color="var(--c-lava)" />
+    </linearGradient>
+  </defs>
+  <g class="slash-body">
+    <path d={s.stroke} fill={`url(#${gid})`} />
+    {s.splats.map((p) => <circle cx={p.cx.toFixed(1)} cy={p.cy.toFixed(1)} r={p.r.toFixed(1)} fill="var(--c-lava)" />)}
+  </g>
+  {
+    s.drips.map((d) => (
+      <g class="drip" style={`--d:${(0.5 + d.delay).toFixed(2)}s`}>
+        <path d={d.d} fill="var(--c-lava)" />
+        <ellipse
+          class="drip-gloss"
+          cx={d.highlight.cx.toFixed(1)}
+          cy={d.highlight.cy.toFixed(1)}
+          rx={d.highlight.rx.toFixed(1)}
+          ry={d.highlight.ry.toFixed(1)}
+        />
+      </g>
+    ))
+  }
+</svg>
+
+<style>
+  .lava-slash {
+    display: block;
+    pointer-events: none;
+    overflow: visible;
+  }
+</style>

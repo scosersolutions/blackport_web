@@ -1,0 +1,89 @@
+---
+import '@/styles/global.css';
+import { site, BOOKSY_URL } from '@/config/site';
+import { valueOf } from '@/lib/pending';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const ogImage = Astro.site ? new URL('/og.jpg', Astro.site).href : undefined;
+
+// Datos estructurados: solo campos confirmados. Nada provisional.
+const address = valueOf(site.address);
+const geo = valueOf(site.geo);
+const phone = valueOf(site.phone);
+const email = valueOf(site.email);
+const instagram = valueOf(site.instagram);
+const mapsUrl = valueOf(site.mapsUrl);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BarberShop',
+  name: site.name,
+  description: site.description,
+  areaServed: site.island,
+  ...(canonical && { url: canonical }),
+  ...(ogImage && { image: ogImage }),
+  ...(address && {
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: address.street,
+      postalCode: address.postalCode,
+      addressLocality: address.locality,
+      addressRegion: site.island,
+      addressCountry: 'ES',
+    },
+  }),
+  ...(geo && { geo: { '@type': 'GeoCoordinates', latitude: geo.lat, longitude: geo.lng } }),
+  ...(phone && { telephone: phone.e164 }),
+  ...(email && { email }),
+  ...(mapsUrl && { hasMap: mapsUrl }),
+  ...(BOOKSY_URL && {
+    potentialAction: { '@type': 'ReserveAction', target: BOOKSY_URL },
+  }),
+  ...((instagram || BOOKSY_URL) && {
+    sameAs: [instagram?.url, BOOKSY_URL].filter(Boolean),
+  }),
+};
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#090909" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {canonical && <link rel="canonical" href={canonical} />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && <meta property="og:image:width" content="1200" />}
+    {ogImage && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <slot />
+    <script>
+      import '@/scripts/motion';
+    </script>
+  </body>
+</html>

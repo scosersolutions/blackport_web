@@ -1,0 +1,385 @@
+---
+import { getImage } from 'astro:assets';
+import MediaFrame from '../ui/MediaFrame.astro';
+import Icon from '../ui/Icon.astro';
+import LavaSlash from '../lava/LavaSlash.astro';
+import LavaEdge from '../lava/LavaEdge.astro';
+import { gallery, CATEGORY_LABEL } from '@/data/media';
+import { SHOW_PENDING } from '@/lib/pending';
+
+const items = await Promise.all(
+  gallery
+    .filter((p) => p.src || SHOW_PENDING)
+    .map(async (p) => ({
+      photo: p,
+      large: p.src ? (await getImage({ src: p.src, width: Math.min(1280, p.src.width), format: 'webp' })).src : undefined,
+    })),
+);
+const viewable = items.filter((i) => i.large);
+---
+
+<section id="galeria" class="gallery section surface-light" aria-labelledby="gallery-title">
+  <div class="wrap">
+    <header class="gallery-head">
+      <div>
+        <p class="eyebrow" data-reveal="rise">Galería</p>
+        <h2 id="gallery-title" class="h2" data-reveal="lines">
+          <span class="line-mask"><span>Cortes, estilo, </span></span>
+          <span class="line-mask"><span>personalidad. </span></span>
+        </h2>
+      </div>
+      <div class="gallery-aside">
+        <p class="muted">El detalle también es parte del corte. Trabajo real, hecho en BLACKPORT.</p>
+        {
+          viewable.length > 0 && (
+            <button class="link-arrow" type="button" data-gallery-open="0">
+              Ver galería <Icon name="arrow" class="arrow" />
+            </button>
+          )
+        }
+      </div>
+      <LavaSlash class="gallery-slash" seed={9} width={900} height={170} thickness={22} drips={2} />
+    </header>
+
+    <ul class="gallery-grid">
+      {
+        items.map(({ photo, large }, i) => (
+          <li class="g-item" data-reveal="mask" style={`--delay:${((i % 4) * 0.07).toFixed(2)}s`}>
+            {large ? (
+              <button
+                type="button"
+                class="g-btn"
+                data-gallery-open={viewable.findIndex((v) => v.photo.id === photo.id)}
+                aria-label={`Ampliar: ${photo.alt}`}
+              >
+                <MediaFrame photo={photo} sizes="(min-width: 900px) 34vw, 50vw" widths={[400, 640, 853]} />
+                <span class="g-cat" aria-hidden="true">{CATEGORY_LABEL[photo.category]}</span>
+              </button>
+            ) : (
+              <MediaFrame photo={photo} sizes="34vw" />
+            )}
+            {i === 2 && (
+              <LavaEdge
+                class="g-drip"
+                seed={123}
+                base={0}
+                amp={0}
+                width={200}
+                minWidth="0px"
+                fixed={[
+                  { t: 0.35, len: 90, w: 10 },
+                  { t: 0.7, len: 40, w: 7 },
+                ]}
+              />
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  {
+    viewable.length > 0 && (
+      <dialog class="lightbox" aria-label="Galería ampliada" data-lightbox>
+        <figure class="lb-figure">
+          <img class="lb-img" alt="" data-lb-img />
+          <figcaption class="lb-caption">
+            <span data-lb-caption />
+            <span class="lb-count" aria-live="polite" data-lb-count />
+          </figcaption>
+        </figure>
+        <button class="lb-btn lb-close" type="button" data-lb-close>
+          <Icon name="close" />
+          <span class="sr-only">Cerrar galería</span>
+        </button>
+        <button class="lb-btn lb-prev" type="button" data-lb-prev>
+          <Icon name="prev" />
+          <span class="sr-only">Foto anterior</span>
+        </button>
+        <button class="lb-btn lb-next" type="button" data-lb-next>
+          <Icon name="next" />
+          <span class="sr-only">Foto siguiente</span>
+        </button>
+        <script
+          type="application/json"
+          data-lb-data
+          set:html={JSON.stringify(viewable.map((v) => ({ src: v.large, alt: v.photo.alt })))}
+        />
+      </dialog>
+    )
+  }
+</section>
+
+<script>
+  interface Slide {
+    src: string;
+    alt: string;
+  }
+  const dialog = document.querySelector<HTMLDialogElement>('[data-lightbox]');
+  const dataEl = dialog?.querySelector('[data-lb-data]');
+  if (dialog && dataEl?.textContent) {
+    const slides = JSON.parse(dataEl.textContent) as Slide[];
+    const img = dialog.querySelector<HTMLImageElement>('[data-lb-img]')!;
+    const caption = dialog.querySelector<HTMLElement>('[data-lb-caption]')!;
+    const count = dialog.querySelector<HTMLElement>('[data-lb-count]')!;
+    let index = 0;
+    let opener: HTMLElement | null = null;
+
+    const show = (i: number): void => {
+      index = (i + slides.length) % slides.length;
+      const s = slides[index];
+      img.src = s.src;
+      img.alt = s.alt;
+      caption.textContent = s.alt;
+      count.textContent = `${index + 1} / ${slides.length}`;
+    };
+    document.querySelectorAll<HTMLElement>('[data-gallery-open]').forEach((el) => {
+      el.addEventListener('click', () => {
+        opener = el;
+        show(Number(el.dataset.galleryOpen) || 0);
+        dialog.showModal();
+      });
+    });
+    dialog.querySelector('[data-lb-close]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-lb-prev]')?.addEventListener('click', () => show(index - 1));
+    dialog.querySelector('[data-lb-next]')?.addEventListener('click', () => show(index + 1));
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') show(index + 1);
+      if (e.key === 'ArrowLeft') show(index - 1);
+    });
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => opener?.focus());
+
+    // Gesto de deslizar en móvil.
+    let startX = 0;
+    dialog.addEventListener('touchstart', (e) => (startX = e.touches[0].clientX), { passive: true });
+    dialog.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+    });
+  }
+</script>
+
+<style>
+  .gallery-head {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 2rem;
+    margin-bottom: clamp(3rem, 6vw, 5.5rem);
+  }
+  .gallery-head .h2 {
+    margin-top: 1.25rem;
+  }
+  .gallery-aside {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    max-width: 36ch;
+  }
+  /* Brochazo en el hueco entre cabecera y collage, sobre la pared de la foto del espejo. */
+  .gallery-slash {
+    position: absolute;
+    right: 20%;
+    top: calc(100% + 0.5rem);
+    width: min(30%, 400px);
+    z-index: 2;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-rows: clamp(110px, 11vw, 170px);
+    gap: clamp(0.5rem, 0.9vw, 0.85rem);
+  }
+  .g-item {
+    position: relative;
+    min-height: 0;
+    background: var(--c-ink-2);
+  }
+  /* Composición editorial: tamaños y proporciones variados, sin huecos (9 piezas). */
+  .g-item:nth-child(1) { grid-area: 1 / 1 / 4 / 6; }
+  .g-item:nth-child(2) { grid-area: 1 / 6 / 3 / 10; }
+  .g-item:nth-child(3) { grid-area: 1 / 10 / 3 / 13; }
+  .g-item:nth-child(4) { grid-area: 3 / 6 / 5 / 8; }
+  .g-item:nth-child(5) { grid-area: 3 / 8 / 5 / 13; }
+  .g-item:nth-child(6) { grid-area: 4 / 1 / 7 / 4; }
+  .g-item:nth-child(7) { grid-area: 4 / 4 / 7 / 6; }
+  .g-item:nth-child(8) { grid-area: 5 / 6 / 7 / 9; }
+  .g-item:nth-child(9) { grid-area: 5 / 9 / 7 / 13; }
+
+  .g-btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+  .g-btn :global(.media) {
+    transition: transform 1.2s var(--ease-out);
+  }
+  .g-btn:hover :global(.media),
+  .g-btn:focus-visible :global(.media) {
+    transform: scale(1.045);
+  }
+  .g-btn:focus-visible {
+    outline-offset: -4px;
+  }
+  .g-cat {
+    position: absolute;
+    left: 0.9rem;
+    bottom: 0.8rem;
+    padding: 0.35rem 0.6rem;
+    background: var(--c-ink);
+    color: var(--c-white);
+    font-size: 0.62rem;
+    font-weight: 650;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.35s,
+      transform 0.35s var(--ease-out);
+  }
+  .g-btn:hover .g-cat,
+  .g-btn:focus-visible .g-cat {
+    opacity: 1;
+    transform: none;
+  }
+  .g-drip {
+    position: absolute;
+    left: 10%;
+    bottom: 0;
+    width: 40%;
+    z-index: 1;
+    transform: translateY(calc(100% - 4px));
+  }
+
+  @media (max-width: 899px) {
+    .gallery-head {
+      grid-template-columns: 1fr;
+    }
+    .gallery-slash {
+      right: -6%;
+      top: calc(100% + 0.25rem);
+      width: 50%;
+    }
+    .gallery-aside {
+      z-index: 1;
+    }
+    .gallery-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 44vw;
+      grid-auto-flow: dense;
+    }
+    .gallery-grid .g-item {
+      grid-area: auto;
+    }
+    .gallery-grid .g-item:nth-child(4n + 1) {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+    .g-cat {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* ───────── Lightbox ───────── */
+  .lightbox {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: clamp(1rem, 4vw, 3rem);
+    border: 0;
+    background: rgb(9 9 9 / 0.97);
+    color: var(--c-white);
+  }
+  .lightbox[open] {
+    display: grid;
+    place-items: center;
+  }
+  .lightbox::backdrop {
+    background: rgb(9 9 9 / 0.9);
+  }
+  .lb-figure {
+    display: grid;
+    gap: 0.9rem;
+    justify-items: center;
+    max-width: 100%;
+  }
+  .lb-img {
+    max-width: min(100%, 1100px);
+    max-height: calc(100svh - 9rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  .lb-caption {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 60ch;
+    color: var(--c-ash);
+    font-size: var(--fs-small);
+  }
+  .lb-count {
+    font-variant-numeric: tabular-nums;
+    color: var(--c-white);
+    white-space: nowrap;
+  }
+  .lb-btn {
+    position: fixed;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgb(255 255 255 / 0.3);
+    border-radius: 50%;
+    background: rgb(9 9 9 / 0.6);
+    transition:
+      background 0.3s,
+      border-color 0.3s;
+  }
+  .lb-btn:hover {
+    background: var(--c-lava);
+    border-color: var(--c-lava);
+  }
+  .lb-btn :global(.icon) {
+    width: 22px;
+    height: 22px;
+  }
+  .lb-close {
+    top: 1rem;
+    right: 1rem;
+  }
+  .lb-prev,
+  .lb-next {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .lb-prev {
+    left: 1rem;
+  }
+  .lb-next {
+    right: 1rem;
+  }
+  @media (max-width: 699px) {
+    .lb-prev,
+    .lb-next {
+      top: auto;
+      bottom: 1rem;
+      transform: none;
+    }
+  }
+</style>

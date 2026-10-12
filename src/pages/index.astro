@@ -1,0 +1,58 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav, { type NavItem } from '@/components/Nav.astro';
+import Footer from '@/components/Footer.astro';
+import StickyBooking from '@/components/StickyBooking.astro';
+import Hero from '@/components/sections/Hero.astro';
+import About from '@/components/sections/About.astro';
+import Chapters from '@/components/sections/Chapters.astro';
+import Services from '@/components/sections/Services.astro';
+import Gallery from '@/components/sections/Gallery.astro';
+import Booking from '@/components/sections/Booking.astro';
+import Reviews from '@/components/sections/Reviews.astro';
+import Visit from '@/components/sections/Visit.astro';
+import { site, BOOKSY_URL } from '@/config/site';
+import { services } from '@/data/services';
+import { reviews } from '@/data/reviews';
+import { gallery, presentationVideo, openingVideo, hasVideo } from '@/data/media';
+import { SHOW_PENDING, valueOf } from '@/lib/pending';
+
+/*
+ * Visibilidad: una sección sin contenido real no se publica.
+ * En desarrollo (SHOW_PENDING) se muestran todas, con los huecos etiquetados.
+ */
+const show = {
+  chapters: hasVideo(presentationVideo) || hasVideo(openingVideo) || SHOW_PENDING,
+  services: services.length > 0 || SHOW_PENDING,
+  gallery: gallery.some((p) => p.src) || SHOW_PENDING,
+  booking: Boolean(BOOKSY_URL) || SHOW_PENDING,
+  reviews: reviews.length > 0 || Boolean(valueOf(site.googleReviewsUrl) || valueOf(site.booksyReviewsUrl)) || SHOW_PENDING,
+};
+
+const hasContact = [site.phone, site.email, site.instagram, site.mapsUrl, site.address].some((f) => f.status === 'confirmed') || SHOW_PENDING;
+
+const navItems: NavItem[] = [
+  { href: '#sobre', label: 'Sobre nosotros' },
+  show.services && { href: '#servicios', label: 'Servicios' },
+  show.gallery && { href: '#galeria', label: 'Galería' },
+  show.chapters && { href: '#videos', label: 'Vídeos' },
+  show.reviews && { href: '#resenas', label: 'Reseñas' },
+  { href: '#visitanos', label: hasContact ? 'Contacto' : 'Ubicación' },
+].filter((x): x is NavItem => Boolean(x));
+---
+
+<Base title={`${site.name} · Barbería en ${site.island}`} description={site.description}>
+  <Nav items={navItems} />
+  <main id="contenido">
+    <Hero />
+    <About />
+    {show.chapters && <Chapters />}
+    {show.services && <Services />}
+    {show.gallery && <Gallery />}
+    {show.booking && <Booking />}
+    {show.reviews && <Reviews />}
+    <Visit />
+  </main>
+  <Footer items={navItems} />
+  {show.booking && <StickyBooking />}
+</Base>

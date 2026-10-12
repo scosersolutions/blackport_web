@@ -1,0 +1,45 @@
+:root {
+  /* Superficies */
+  --c-ink: #090909;
+  --c-ink-2: #151515;
+  --c-ink-3: #1f1f1f;
+  --c-white: #ffffff;
+  --c-bone: #f3f0ea;
+  --c-bone-2: #e7e2d9;
+
+  /* Rojo volcánico, ajustado al rojo del logotipo original (#b6272d medido).
+     Contrastes medidos: blanco sobre lava 5.4:1 · bright sobre ink 5.3:1 ·
+     lava-ink sobre bone 6.4:1. */
+  --c-lava: #cc2731; /* gráfico, botones */
+  --c-lava-deep: #861118; /* sombra del líquido */
+  --c-lava-bright: #f0444c; /* texto pequeño sobre negro */
+  --c-lava-ink: #a8202a; /* texto pequeño sobre crema */
+  --c-heat: #ff7a4d; /* núcleo incandescente de las grietas */
+
+  /* Texto */
+  --c-ash: #888888; /* secundario sobre negro */
+  --c-ash-ink: #5d5a55; /* secundario sobre crema */
+  --c-line-dark: rgb(255 255 255 / 0.14);
+  --c-line-light: rgb(9 9 9 / 0.14);
+
+  /* Tipografía */
+  --font: 'Archivo Variable', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --fs-eyebrow: 0.72rem;
+  --fs-small: 0.8125rem;
+  --fs-body: clamp(0.95rem, 0.9rem + 0.2vw, 1.0625rem);
+  --fs-lead: clamp(1.05rem, 0.95rem + 0.45vw, 1.25rem);
+  --fs-h3: clamp(1.15rem, 1rem + 0.6vw, 1.5rem);
+  --fs-h2: clamp(2rem, 1.3rem + 3vw, 3.75rem);
+  --fs-display: clamp(4.25rem, 1rem + 15.5vw, 13.5rem);
+
+  /* Espaciado y layout */
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --maxw: 1440px;
+  --section-y: clamp(5rem, 3rem + 8vw, 10rem);
+  --nav-h: 76px;
+
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-liquid: cubic-bezier(0.55, 0, 0.15, 1);
+  --dur: 0.9s;
+}

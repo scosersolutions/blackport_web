@@ -1,0 +1,156 @@
+---
+import MediaFrame from '../ui/MediaFrame.astro';
+import BookingCta from '../ui/BookingCta.astro';
+import Icon from '../ui/Icon.astro';
+import Pending from '../ui/Pending.astro';
+import LavaEdge from '../lava/LavaEdge.astro';
+import { bookingPhoto } from '@/data/media';
+import { site } from '@/config/site';
+import { valueOf } from '@/lib/pending';
+
+const hours = valueOf(site.hours);
+---
+
+<section id="reservar" class="booking surface-dark grain" aria-labelledby="booking-title">
+  <LavaEdge class="booking-pour" seed={512} base={14} amp={9} drips={11} minLen={20} maxLen={190} minW={10} maxW={30} />
+
+  <div class="booking-photo" data-parallax="0.08">
+    <MediaFrame photo={bookingPhoto} sizes="(min-width: 900px) 45vw, 100vw" widths={[480, 853]} />
+  </div>
+  <div class="booking-shade" aria-hidden="true"></div>
+
+  <div class="booking-inner wrap">
+    <p class="eyebrow" data-reveal="rise">Reservas · Booksy</p>
+    <h2 id="booking-title" class="booking-title" data-reveal="lines">
+      <span class="line-mask"><span>Tu próximo corte </span></span>
+      <span class="line-mask"><span class="booking-red">empieza aquí. </span></span>
+    </h2>
+    <p class="booking-text" data-reveal="rise" style="--delay:.15s">
+      Reserva tu cita en Booksy: elige el servicio, el día y la hora que mejor te vengan.
+    </p>
+    <div class="booking-cta" data-reveal="rise" style="--delay:.25s">
+      <BookingCta size="lg" placement="booking" />
+    </div>
+
+    <div class="booking-hours">
+      <Icon name="clock" />
+      {
+        hours ? (
+          <dl>
+            {hours.map((h) => (
+              <div>
+                <dt>{h.days}</dt>
+                <dd>{h.hours}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <Pending label="horario de apertura" />
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .booking {
+    position: relative;
+    min-height: min(92svh, 860px);
+    display: flex;
+    align-items: center;
+    padding-block: clamp(9rem, 14vw, 13rem) var(--section-y);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .booking-pour {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
+  }
+  .booking-photo {
+    position: absolute;
+    z-index: -2;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(48%, 760px);
+  }
+  .booking-photo :global(.media) {
+    height: 110%;
+  }
+  .booking-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, var(--c-ink) 45%, rgb(9 9 9 / 0.55) 62%, rgb(9 9 9 / 0.15)),
+      linear-gradient(0deg, var(--c-ink), transparent 30%);
+  }
+  .booking-inner {
+    position: relative;
+  }
+  .booking-title {
+    margin-block: 1.4rem 1.6rem;
+    font-size: clamp(2.6rem, 1rem + 6vw, 6.6rem);
+    font-weight: 820;
+    font-stretch: 80%;
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+  .booking-red {
+    color: var(--c-lava);
+  }
+  .booking-text {
+    max-width: 40ch;
+    color: rgb(255 255 255 / 0.78);
+    font-size: var(--fs-lead);
+  }
+  .booking-cta {
+    margin-top: 2.25rem;
+  }
+  .booking-hours {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    margin-top: 3rem;
+    color: var(--c-ash);
+    font-size: var(--fs-small);
+  }
+  .booking-hours :global(.icon) {
+    flex: none;
+    width: 20px;
+    color: var(--c-lava-bright);
+  }
+  .booking-hours dl {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+  }
+  .booking-hours dl div {
+    display: flex;
+    gap: 1rem;
+  }
+  .booking-hours dd {
+    margin: 0;
+    color: var(--c-white);
+  }
+
+  @media (max-width: 899px) {
+    .booking {
+      align-items: flex-end;
+      min-height: 0;
+      padding-top: 58vw;
+    }
+    .booking-photo {
+      width: 100%;
+      bottom: auto;
+      height: 75vw;
+    }
+    .booking-shade {
+      background: linear-gradient(0deg, var(--c-ink) 40%, rgb(9 9 9 / 0.3) 75%, rgb(9 9 9 / 0.5));
+    }
+    .booking-cta :global(.btn) {
+      width: 100%;
+    }
+  }
+</style>

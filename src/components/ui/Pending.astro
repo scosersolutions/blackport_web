@@ -1,0 +1,13 @@
+---
+/** Etiqueta de dato pendiente. Solo se renderiza en desarrollo / PUBLIC_SHOW_PENDING. */
+import { SHOW_PENDING } from '@/lib/pending';
+
+interface Props {
+  label: string;
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+---
+
+{SHOW_PENDING && <span class:list={['pending-tag', className]}>Pendiente · {label}</span>}

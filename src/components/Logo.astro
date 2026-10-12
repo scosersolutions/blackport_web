@@ -1,0 +1,57 @@
+---
+/**
+ * Logotipo original de BLACKPORT (PNG transparente extraído del archivo recibido).
+ * Solo sobre superficies oscuras: el «BLacK» es blanco.
+ * Fuente original: 500×500 px → la marca mide ~330 px; no mostrar a más de
+ * ~330 px CSS de ancho para no perder nitidez. Pedir versión vectorial (SVG/PDF).
+ * Si faltara el archivo, cae a un wordmark tipográfico provisional.
+ */
+import { Image } from 'astro:assets';
+import { logo } from '@/data/media';
+import { scopeAttrs } from '@/lib/scope';
+
+interface Props {
+  class?: string;
+  /** Ancho CSS en px. */
+  width: number;
+  priority?: boolean;
+}
+
+const { class: className, width, priority = false } = Astro.props;
+const scope = scopeAttrs(Astro.props);
+const native = logo?.width ?? width;
+const widths = [Math.min(width, native), Math.min(width * 2, native)].filter((v, i, a) => a.indexOf(v) === i);
+---
+
+{
+  logo ? (
+    <Image
+      src={logo}
+      alt="BLACKPORT"
+      class:list={['logo', className]}
+      widths={widths}
+      sizes={`${width}px`}
+      loading={priority ? 'eager' : 'lazy'}
+      style={`width:${width}px`}
+      {...scope}
+    />
+  ) : (
+    <span class:list={['logo', 'logo--provisional', className]} style={`font-size:${width / 7}px`} {...scope}>
+      BLACKPORT
+    </span>
+  )
+}
+
+<style>
+  .logo {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  .logo--provisional {
+    font-weight: 900;
+    font-stretch: 112%;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+</style>

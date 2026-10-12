@@ -1,0 +1,182 @@
+---
+import Logo from './Logo.astro';
+import Icon from './ui/Icon.astro';
+import LavaEdge from './lava/LavaEdge.astro';
+import type { NavItem } from './Nav.astro';
+import { site, BOOKSY_URL } from '@/config/site';
+import { valueOf } from '@/lib/pending';
+
+interface Props {
+  items: NavItem[];
+}
+
+const { items } = Astro.props;
+const instagram = valueOf(site.instagram);
+const phone = valueOf(site.phone);
+const email = valueOf(site.email);
+const year = new Date().getFullYear();
+---
+
+<footer class="footer surface-dark">
+  <LavaEdge
+    class="footer-drip"
+    seed={2024}
+    tone="lava"
+    base={5}
+    amp={2}
+    width={600}
+    minWidth="0px"
+    fixed={[
+      { t: 0.18, len: 34, w: 7 },
+      { t: 0.46, len: 120, w: 14 },
+      { t: 0.62, len: 58, w: 9 },
+      { t: 0.86, len: 22, w: 6 },
+    ]}
+  />
+
+  <div class="footer-inner wrap">
+    <div class="footer-brand">
+      <Logo width={150} />
+      <p class="muted">Barbería en {site.island}.</p>
+    </div>
+
+    <nav class="footer-nav" aria-label="Secundaria">
+      <ul>
+        {
+          items.map((it) => (
+            <li>
+              <a href={it.href}>{it.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <ul class="footer-contact">
+      {
+        instagram && (
+          <li>
+            <a href={instagram.url} target="_blank" rel="noopener noreferrer">
+              <Icon name="instagram" /> @{instagram.handle}
+            </a>
+          </li>
+        )
+      }
+      {
+        phone && (
+          <li>
+            <a href={`tel:${phone.e164}`}>
+              <Icon name="phone" /> {phone.display}
+            </a>
+          </li>
+        )
+      }
+      {
+        email && (
+          <li>
+            <a href={`mailto:${email}`}>
+              <Icon name="mail" /> {email}
+            </a>
+          </li>
+        )
+      }
+      {
+        BOOKSY_URL && (
+          <li>
+            <a href={BOOKSY_URL} target="_blank" rel="noopener noreferrer">
+              <Icon name="calendar" /> Reservar en Booksy
+            </a>
+          </li>
+        )
+      }
+    </ul>
+  </div>
+
+  <div class="footer-base wrap">
+    <p>© {year} {site.name}. Todos los derechos reservados.</p>
+    <a href="#inicio">Volver arriba ↑</a>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    padding-top: clamp(4rem, 8vw, 6rem);
+    border-top: 1px solid var(--c-line-dark);
+  }
+  .footer-drip {
+    position: absolute;
+    top: 0;
+    right: var(--gutter);
+    width: clamp(160px, 22vw, 300px);
+  }
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 2.5rem;
+    padding-bottom: 3rem;
+  }
+  .footer-brand {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+  .footer-nav ul,
+  .footer-contact {
+    display: grid;
+    gap: 0.25rem;
+    align-content: start;
+  }
+  .footer-nav a,
+  .footer-contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 40px;
+    font-size: var(--fs-small);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.8);
+    transition: color 0.3s;
+  }
+  .footer-contact a {
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .footer-nav a:hover,
+  .footer-contact a:hover {
+    color: var(--c-lava-bright);
+  }
+  .footer-contact :global(.icon) {
+    width: 18px;
+  }
+  .footer-base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.5rem 2rem;
+    border-top: 1px solid var(--c-line-dark);
+    color: var(--c-ash);
+    font-size: 0.75rem;
+  }
+  .footer-base a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    margin-block: -0.75rem;
+  }
+  .footer-base a:hover {
+    color: var(--c-white);
+  }
+
+  @media (max-width: 799px) {
+    .footer-inner {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

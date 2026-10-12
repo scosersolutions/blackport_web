@@ -1,0 +1,250 @@
+---
+import MediaFrame from '../ui/MediaFrame.astro';
+import BookingCta from '../ui/BookingCta.astro';
+import Pending from '../ui/Pending.astro';
+import LavaEdge from '../lava/LavaEdge.astro';
+import { services, servicePreview, formatPrice, formatDuration } from '@/data/services';
+import { servicesPhoto } from '@/data/media';
+
+const isPreview = services.length === 0;
+const rows = isPreview ? servicePreview : services;
+---
+
+<section id="servicios" class="services section surface-dark-2" aria-labelledby="services-title">
+  <div class="services-grid wrap">
+    <header class="services-head">
+      <p class="eyebrow" data-reveal="rise">Servicios</p>
+      <h2 id="services-title" class="h2" data-reveal="lines">
+        <span class="line-mask"><span>Tu estilo, </span></span>
+        <span class="line-mask"><span>nuestro trabajo. </span></span>
+      </h2>
+      <p class="muted services-intro" data-reveal="rise">
+        Del corte clásico al color más atrevido: cada servicio pensado para que salgas con tu mejor versión.
+      </p>
+      {isPreview && <Pending label="carta de servicios: nombres, precios y duraciones" />}
+    </header>
+
+    <div class="services-list-wrap">
+      <div class="services-cols" aria-hidden="true">
+        <span>Servicio</span><span>Duración</span><span>Precio</span>
+      </div>
+      <ol class="services-list">
+        {
+          rows.map((s, i) => {
+            const duration = formatDuration(s);
+            const price = formatPrice(s);
+            return (
+              <li class="service" data-reveal="rise" style={`--delay:${(i * 0.06).toFixed(2)}s`}>
+                <span class="service-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <span class="service-main">
+                  <span class="service-name">{s.name}</span>
+                  {s.description && <span class="service-desc">{s.description}</span>}
+                </span>
+                <span class="service-meta">
+                  <span class="sr-only">Duración:</span>
+                  {duration ?? <span aria-label="sin especificar">—</span>}
+                </span>
+                <span class="service-meta">
+                  <span class="sr-only">Precio:</span>
+                  {price ?? <span aria-label="sin especificar">—</span>}
+                </span>
+              </li>
+            );
+          })
+        }
+      </ol>
+      <div class="services-cta">
+        <BookingCta label="Reservar servicio" variant="outline-lava" placement="services" />
+      </div>
+    </div>
+
+    <figure class="services-photo">
+      <div class="services-photo-frame" data-reveal="mask">
+        <MediaFrame photo={servicesPhoto} sizes="(min-width: 1100px) 26vw, 60vw" widths={[480, 853]} />
+      </div>
+      <LavaEdge
+        class="services-drip"
+        seed={77}
+        base={0}
+        amp={0}
+        width={200}
+        minWidth="0px"
+        fixed={[
+          { t: 0.3, len: 52, w: 8 },
+          { t: 0.55, len: 128, w: 13 },
+          { t: 0.82, len: 80, w: 10 },
+        ]}
+      />
+    </figure>
+  </div>
+</section>
+
+<style>
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(1rem, 2vw, 2rem);
+    row-gap: 3rem;
+  }
+  .services-head {
+    grid-column: 1 / span 5;
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+    justify-items: start;
+  }
+  .services-intro {
+    max-width: 38ch;
+  }
+  .services-list-wrap {
+    grid-column: 1 / span 8;
+    grid-row: 2;
+  }
+  .services-cols,
+  .service {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) 7rem 7rem;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .services-cols {
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--c-line-dark);
+    color: var(--c-ash);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .services-cols span:first-child {
+    grid-column: 2;
+  }
+  .service {
+    position: relative;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--c-line-dark);
+  }
+  /* Línea de lava que recorre la fila al pasar el cursor. */
+  .service::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--c-lava);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .service:hover::after {
+    transform: scaleX(1);
+  }
+  .service-num {
+    color: var(--c-ash);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    transition: color 0.3s;
+  }
+  .service:hover .service-num {
+    color: var(--c-lava-bright);
+  }
+  .service-main {
+    display: grid;
+    gap: 0.3rem;
+    transition: transform 0.45s var(--ease-out);
+  }
+  .service:hover .service-main {
+    transform: translateX(6px);
+  }
+  .service-name {
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    font-weight: 680;
+    font-stretch: 94%;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .service-desc {
+    color: var(--c-ash);
+    font-size: var(--fs-small);
+  }
+  .service-meta {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .services-cta {
+    margin-top: 2.25rem;
+  }
+
+  .services-photo {
+    position: relative;
+    grid-column: 9 / span 4;
+    grid-row: 1 / span 2;
+    align-self: center;
+    margin-top: 4rem;
+  }
+  .services-photo-frame {
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+  }
+  .services-drip {
+    position: absolute;
+    right: -4%;
+    bottom: 0;
+    width: 46%;
+    transform: translateY(calc(100% - 4px));
+  }
+
+  @media (max-width: 1099px) {
+    .services-head,
+    .services-list-wrap {
+      grid-column: 1 / -1;
+    }
+    .services-photo {
+      grid-column: 6 / -1;
+      grid-row: 1;
+      margin-top: 0;
+    }
+    .services-head {
+      grid-column: 1 / span 6;
+    }
+  }
+  @media (max-width: 699px) {
+    .services-head {
+      grid-column: 1 / -1;
+    }
+    .services-photo {
+      grid-column: 4 / -1;
+      grid-row: 2;
+    }
+    .services-list-wrap {
+      grid-row: 3;
+      margin-top: 4rem;
+    }
+    .services-cols {
+      display: none;
+    }
+    .service {
+      grid-template-columns: 2rem minmax(0, 1fr) auto;
+      grid-template-areas: 'num main main' '. dur price';
+      row-gap: 0.6rem;
+    }
+    .service-num {
+      grid-area: num;
+    }
+    .service-main {
+      grid-area: main;
+    }
+    .service-meta {
+      font-size: var(--fs-small);
+      color: var(--c-ash);
+    }
+    .service-meta:nth-of-type(3) {
+      grid-area: dur;
+    }
+    .service-meta:last-child {
+      grid-area: price;
+    }
+  }
+</style>

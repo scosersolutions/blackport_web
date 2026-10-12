@@ -1,0 +1,205 @@
+---
+/* Copy de marca provisional (sin datos biográficos ni históricos): validar con BLACKPORT. */
+import MediaFrame from '../ui/MediaFrame.astro';
+import Icon from '../ui/Icon.astro';
+import LavaEdge from '../lava/LavaEdge.astro';
+import LavaSplatter from '../lava/LavaSplatter.astro';
+import { aboutPhotos } from '@/data/media';
+
+const values = ['Estilo', 'Precisión', 'Actitud'];
+---
+
+<section id="sobre" class="about surface-light" aria-labelledby="about-title">
+  <LavaEdge class="about-melt" seed={31} tone="ink" base={26} amp={12} drips={9} minLen={18} maxLen={120} minW={12} maxW={34} />
+
+  <div class="about-grid wrap">
+    <div class="about-text">
+      <p class="eyebrow" data-reveal="rise">Sobre BLACKPORT</p>
+      <h2 id="about-title" class="h2 about-title" data-reveal="lines">
+        <span class="line-mask"><span>Disciplina, </span></span>
+        <span class="line-mask"><span>estilo </span></span>
+        <span class="line-mask"><span>y actitud. </span></span>
+      </h2>
+      <p class="about-body" data-reveal="rise" style="--delay:.15s">
+        En BLACKPORT cada corte tiene un propósito. Escuchamos lo que buscas, trabajamos con precisión y cuidamos
+        cada detalle —del degradado al color— para que salgas con tu mejor versión.
+      </p>
+      <a class="link-arrow" href="#galeria" data-reveal="rise" style="--delay:.25s">
+        Ver el trabajo <Icon name="arrow" class="arrow" />
+      </a>
+    </div>
+
+    <figure class="about-portrait">
+      <div class="about-portrait-frame" data-reveal="mask">
+        <MediaFrame photo={aboutPhotos.main} sizes="(min-width: 900px) 34vw, 88vw" widths={[480, 853]} />
+      </div>
+      <LavaEdge
+        class="portrait-drip"
+        seed={52}
+        base={0}
+        amp={0}
+        width={200}
+        minWidth="0px"
+        fixed={[
+          { t: 0.18, len: 160, w: 14 },
+          { t: 0.42, len: 70, w: 9 },
+          { t: 0.62, len: 34, w: 7 },
+        ]}
+      />
+      <ul class="about-values" aria-label="Valores">
+        {values.map((v) => <li>{v}</li>)}
+      </ul>
+    </figure>
+
+    <figure class="about-detail" data-parallax="0.05">
+      <div class="about-detail-frame" data-reveal="mask-x">
+        <MediaFrame photo={aboutPhotos.detail} sizes="(min-width: 900px) 24vw, 56vw" widths={[480, 853]} />
+      </div>
+      <LavaSplatter class="detail-splat" seed={5} />
+    </figure>
+  </div>
+</section>
+
+<style>
+  .about {
+    position: relative;
+    z-index: 1;
+    padding-top: clamp(6rem, 12vw, 10rem);
+    padding-bottom: clamp(4rem, 7vw, 7rem);
+  }
+  .about-melt {
+    position: absolute;
+    inset: 0 0 auto;
+  }
+  .about-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(1rem, 2vw, 2rem);
+    align-items: start;
+  }
+  .about-text {
+    grid-column: 1 / span 6;
+    grid-row: 1;
+    padding-top: clamp(3rem, 6vw, 6rem);
+  }
+  .about-title {
+    margin-block: 1.25rem 2rem;
+    font-size: clamp(2.6rem, 1.4rem + 4.2vw, 5.4rem);
+  }
+  .about-body {
+    max-width: 44ch;
+    color: var(--c-ash-ink);
+    font-size: var(--fs-lead);
+    margin-bottom: 1.75rem;
+  }
+
+  .about-portrait {
+    position: relative;
+    grid-column: 8 / span 5;
+    grid-row: 1 / span 2;
+    margin-top: clamp(-14rem, -12vw, -6rem);
+  }
+  .about-portrait-frame {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--c-ink-2);
+  }
+  .portrait-drip {
+    position: absolute;
+    left: -6%;
+    bottom: 0;
+    width: 40%;
+    transform: translateY(calc(100% - 4px));
+  }
+  .about-values {
+    position: absolute;
+    right: calc(100% + 1.5rem);
+    bottom: 0;
+    display: grid;
+    gap: 0.35rem;
+    font-size: var(--fs-eyebrow);
+    font-weight: 650;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    text-align: right;
+  }
+  .about-values li::after {
+    content: '';
+    display: inline-block;
+    width: 1.6rem;
+    height: 1px;
+    margin-left: 0.75rem;
+    vertical-align: middle;
+    background: var(--c-lava);
+  }
+
+  .about-detail {
+    position: relative;
+    grid-column: 2 / span 4;
+    grid-row: 2;
+    margin-top: clamp(2.5rem, 4vw, 4rem);
+  }
+  .about-detail-frame {
+    aspect-ratio: 5 / 4;
+    overflow: hidden;
+    background: var(--c-ink-2);
+  }
+  .detail-splat {
+    position: absolute;
+    right: -3rem;
+    top: -3rem;
+    width: 7rem;
+  }
+
+  @media (max-width: 899px) {
+    .about-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .about-text {
+      grid-column: 1 / -1;
+      padding-top: 2rem;
+    }
+    .about-portrait {
+      grid-column: 1 / span 5;
+      grid-row: 2;
+      margin-top: 3rem;
+    }
+    /* La lista de valores va encima de la foto: el goteo sigue anclado al pie de la imagen. */
+    .about-portrait {
+      display: flex;
+      flex-direction: column;
+    }
+    .about-values {
+      position: static;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      order: -1;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .about-values li::after {
+      display: none;
+    }
+    .about-values li::before {
+      content: '';
+      display: inline-block;
+      width: 0.9rem;
+      height: 1px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+      background: var(--c-lava);
+    }
+    .about-detail {
+      grid-column: 3 / -1;
+      grid-row: 3;
+      margin-top: 5rem;
+    }
+    .detail-splat {
+      right: auto;
+      left: -2.5rem;
+      width: 5rem;
+    }
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+/** Barra de reserva fija en móvil, visible cuando el hero sale de pantalla. */
+import BookingCta from './ui/BookingCta.astro';
+---
+
+<div class="sticky-book" data-sticky-book>
+  <BookingCta label="Reservar cita" placement="sticky" />
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-sticky-book]');
+  const hero = document.getElementById('inicio');
+  const booking = document.getElementById('reservar');
+  if (bar && hero && 'IntersectionObserver' in window) {
+    let heroVisible = true;
+    let bookingVisible = false;
+    const sync = (): void => {
+      bar.classList.toggle('is-on', !heroVisible && !bookingVisible);
+    };
+    new IntersectionObserver(([e]) => {
+      heroVisible = e.isIntersecting;
+      sync();
+    }).observe(hero);
+    if (booking) {
+      new IntersectionObserver(([e]) => {
+        bookingVisible = e.isIntersecting;
+        sync();
+      }).observe(booking);
+    }
+  }
+</script>
+
+<style>
+  .sticky-book {
+    display: none;
+  }
+  @media (max-width: 899px) {
+    .sticky-book {
+      position: fixed;
+      z-index: 40;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: block;
+      padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+      background: linear-gradient(transparent, rgb(9 9 9 / 0.92) 35%);
+      transform: translateY(110%);
+      transition: transform 0.45s var(--ease-out);
+      pointer-events: none;
+    }
+    .sticky-book.is-on {
+      transform: none;
+      pointer-events: auto;
+    }
+    .sticky-book :global(.btn),
+    .sticky-book :global(.cta-pending) {
+      width: 100%;
+    }
+    .sticky-book :global(.cta-pending .pending-tag) {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,237 @@
+---
+/**
+ * Vídeos de presentación e inauguración.
+ * - Con archivo: módulo audiovisual completo (carga diferida, poster, controles nativos).
+ * - Sin archivo: en desarrollo, franja compacta de «capítulos pendientes»; en producción no se renderiza
+ *   (index.astro decide la visibilidad).
+ */
+import { getImage } from 'astro:assets';
+import Icon from '../ui/Icon.astro';
+import Pending from '../ui/Pending.astro';
+import LavaEdge from '../lava/LavaEdge.astro';
+import LavaCracks from '../lava/LavaCracks.astro';
+import { presentationVideo, openingVideo, hasVideo, type Video } from '@/data/media';
+
+interface Chapter {
+  num: string;
+  eyebrow: string;
+  title: string;
+  text: string;
+  video: Video;
+}
+
+const chapters: Chapter[] = [
+  {
+    num: '01',
+    eyebrow: 'Vídeo',
+    title: 'Conoce BLACKPORT',
+    text: 'El espacio, el equipo y la forma de trabajar, contados en movimiento.',
+    video: presentationVideo,
+  },
+  {
+    num: '02',
+    eyebrow: 'Inauguración',
+    title: 'El comienzo',
+    text: 'El día en que BLACKPORT abrió sus puertas.',
+    video: openingVideo,
+  },
+];
+
+const ready = await Promise.all(
+  chapters
+    .filter((c) => hasVideo(c.video))
+    .map(async (c) => ({
+      ...c,
+      poster: c.video.poster ? (await getImage({ src: c.video.poster, width: 1280, format: 'webp' })).src : undefined,
+    })),
+);
+const pendingChapters = chapters.filter((c) => !hasVideo(c.video));
+---
+
+<section id="videos" class="chapters surface-dark" aria-labelledby="chapters-title">
+  <div class="wrap">
+    <h2 id="chapters-title" class="sr-only">Vídeos de BLACKPORT</h2>
+
+    {
+      ready.map((c, i) => (
+        <article class:list={['chapter', i % 2 === 1 && 'chapter--alt']} style={`--aspect:${c.video.aspect}`}>
+          <div class="chapter-frame" data-reveal="mask">
+            <video
+              class="chapter-video"
+              controls
+              playsinline
+              preload="none"
+              poster={c.poster}
+              aria-label={c.video.title}
+              data-chapter-video
+            >
+              {c.video.webm && <source src={c.video.webm} type="video/webm" />}
+              {c.video.mp4 && <source src={c.video.mp4} type="video/mp4" />}
+            </video>
+            <LavaEdge class="frame-drip" seed={60 + i} base={6} amp={4} drips={4} maxLen={70} minWidth="0px" width={600} />
+          </div>
+          <div class="chapter-text">
+            <p class="eyebrow">{c.eyebrow}</p>
+            <h3 class="h2 chapter-title">{c.title}</h3>
+            <p class="muted">{c.text}</p>
+            <button class="btn btn--ghost" type="button" data-chapter-play>
+              <Icon name="play" filled /> Ver vídeo
+            </button>
+          </div>
+        </article>
+      ))
+    }
+
+    {
+      pendingChapters.length > 0 && (
+        <div class="pending-chapters">
+          <p class="eyebrow">Capítulos</p>
+          <ol>
+            {pendingChapters.map((c) => (
+              <li>
+                <span class="pc-num">{c.num}</span>
+                <span class="pc-title">{c.title}</span>
+                <span class="pc-meta">{c.video.title}</span>
+                <Pending label={`archivo ${c.video.id}.mp4`} />
+              </li>
+            ))}
+          </ol>
+        </div>
+      )
+    }
+  </div>
+  <LavaCracks seed={140} height={180} />
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.chapter').forEach((ch) => {
+    const video = ch.querySelector<HTMLVideoElement>('[data-chapter-video]');
+    const btn = ch.querySelector<HTMLButtonElement>('[data-chapter-play]');
+    if (!video || !btn) return;
+    btn.addEventListener('click', () => {
+      video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      void video.play();
+      video.focus();
+    });
+  });
+  // Un solo vídeo sonando a la vez.
+  const all = Array.from(document.querySelectorAll<HTMLVideoElement>('[data-chapter-video]'));
+  all.forEach((v) => v.addEventListener('play', () => all.forEach((o) => o !== v && o.pause())));
+</script>
+
+<style>
+  .chapters {
+    position: relative;
+    padding-top: var(--section-y);
+  }
+  .chapter {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: center;
+  }
+  .chapter + .chapter {
+    margin-top: var(--section-y);
+  }
+  .chapter-frame {
+    position: relative;
+    grid-column: 1 / span 7;
+    aspect-ratio: var(--aspect);
+    max-height: 80svh;
+    background: var(--c-ink-2);
+    border: 1px solid var(--c-line-dark);
+  }
+  .chapter--alt .chapter-frame {
+    grid-column: 8 / span 4;
+    grid-row: 1;
+  }
+  .chapter--alt .chapter-text {
+    grid-column: 2 / span 5;
+    grid-row: 1;
+  }
+  .chapter-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+  }
+  .frame-drip {
+    position: absolute;
+    top: -1px;
+    right: 6%;
+    width: 30%;
+  }
+  .chapter-text {
+    grid-column: 9 / span 4;
+    display: grid;
+    gap: 1.1rem;
+    justify-items: start;
+  }
+  .chapter-title {
+    font-size: clamp(2rem, 1.2rem + 2.6vw, 3.4rem);
+  }
+  .chapter-text .btn :global(.icon) {
+    width: 1em;
+    height: 1em;
+  }
+
+  .pending-chapters {
+    padding-bottom: 2rem;
+  }
+  .pending-chapters ol {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--c-line-dark);
+  }
+  .pending-chapters li {
+    display: grid;
+    grid-template-columns: 4rem 1fr auto;
+    align-items: baseline;
+    gap: 0.5rem 1.5rem;
+    padding-block: 1.6rem;
+    border-bottom: 1px solid var(--c-line-dark);
+  }
+  .pc-num {
+    color: var(--c-lava-bright);
+    font-weight: 650;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+  }
+  .pc-title {
+    font-size: clamp(1.6rem, 1rem + 2.4vw, 2.8rem);
+    font-weight: 640;
+    font-stretch: 96%;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .pc-meta {
+    color: var(--c-ash);
+    font-size: var(--fs-small);
+  }
+  .pending-chapters li :global(.pending-tag) {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  @media (max-width: 899px) {
+    .chapter,
+    .chapter--alt {
+      grid-template-columns: 1fr;
+    }
+    .chapter-frame,
+    .chapter-text,
+    .chapter--alt .chapter-frame,
+    .chapter--alt .chapter-text {
+      grid-column: 1;
+      grid-row: auto;
+    }
+    .chapter--alt .chapter-frame {
+      max-width: 22rem;
+    }
+    .pending-chapters li {
+      grid-template-columns: 2.5rem 1fr;
+    }
+    .pc-meta {
+      grid-column: 2;
+    }
+  }
+</style>

@@ -1,0 +1,330 @@
+---
+import { getImage } from 'astro:assets';
+import Logo from '../Logo.astro';
+import BookingCta from '../ui/BookingCta.astro';
+import MediaFrame from '../ui/MediaFrame.astro';
+import Icon from '../ui/Icon.astro';
+import Pending from '../ui/Pending.astro';
+import LavaEdge from '../lava/LavaEdge.astro';
+import LavaCracks from '../lava/LavaCracks.astro';
+import { heroPhoto, heroVideo, hasVideo } from '@/data/media';
+import { site } from '@/config/site';
+
+const withVideo = hasVideo(heroVideo);
+const poster = withVideo && heroPhoto.src ? await getImage({ src: heroPhoto.src, width: 1280, format: 'webp' }) : undefined;
+---
+
+<section id="inicio" class="hero surface-dark grain" aria-labelledby="hero-title">
+  <div class="hero-media" data-parallax="0.06">
+    {
+      withVideo ? (
+        <video class="hero-video" autoplay muted loop playsinline preload="metadata" poster={poster?.src} data-hero-video>
+          {heroVideo.webm && <source src={heroVideo.webm} type="video/webm" />}
+          {heroVideo.mp4 && <source src={heroVideo.mp4} type="video/mp4" />}
+        </video>
+      ) : (
+        <MediaFrame photo={heroPhoto} sizes="(min-width: 900px) 60vw, 100vw" widths={[480, 853]} priority />
+      )
+    }
+    <LavaEdge
+      class="hero-media-drip"
+      seed={7}
+      base={0}
+      amp={0}
+      width={300}
+      minWidth="0px"
+      fixed={[
+        { t: 0.22, len: 150, w: 13 },
+        { t: 0.3, len: 64, w: 8 },
+        { t: 0.82, len: 96, w: 10 },
+      ]}
+    />
+  </div>
+  <div class="hero-shade" aria-hidden="true"></div>
+
+  <div class="hero-content wrap">
+    <div class="hero-logo">
+      <Logo width={168} priority />
+    </div>
+    <p class="eyebrow hero-eyebrow">Barbería <span aria-hidden="true">/</span> {site.island}</p>
+
+    <h1 id="hero-title" class="hero-title" data-reveal="lines">
+      <span class="line-mask l1"><span>Más que </span></span>
+      <span class="line-mask l2"><span>un corte, </span></span>
+      <span class="line-mask l3">
+        <span class="hero-red">
+          un estilo.
+          <LavaEdge
+            class="title-drips"
+            seed={19}
+            base={0}
+            amp={0}
+            width={400}
+            minWidth="0px"
+            fixed={[
+              { t: 0.075, len: 66, w: 13 },
+              { t: 0.335, len: 38, w: 9 },
+              { t: 0.6, len: 52, w: 11 },
+              { t: 0.865, len: 118, w: 16 },
+            ]}
+          />
+        </span>
+      </span>
+    </h1>
+
+    <p class="hero-desc">
+      Barbería en {site.island}. Cortes, color y acabados con carácter propio, hechos con precisión y sin prisas.
+    </p>
+
+    <div class="hero-ctas">
+      <BookingCta label="Reservar cita" size="lg" placement="hero" />
+      <a class="btn btn--ghost btn--lg" href="#sobre">Descubrir BLACKPORT</a>
+    </div>
+  </div>
+
+  {withVideo ? (
+    <button class="hero-pause" type="button" data-hero-toggle aria-pressed="false">
+      <Icon name="pause" />
+      <span class="sr-only">Pausar el vídeo de fondo</span>
+    </button>
+  ) : (
+    <div class="hero-pending"><Pending label="vídeo hero (se usa foto)" /></div>
+  )}
+
+  <a class="hero-scroll" href="#sobre">
+    <span>Scroll</span>
+    <Icon name="down" />
+    <span class="sr-only">Ir a la siguiente sección</span>
+  </a>
+
+  <LavaCracks class="hero-cracks" seed={88} height={150} />
+</section>
+
+<script>
+  const video = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-hero-toggle]');
+  if (video) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = (): void => {
+      const paused = video.paused;
+      toggle?.setAttribute('aria-pressed', String(paused));
+      const label = toggle?.querySelector('.sr-only');
+      if (label) label.textContent = paused ? 'Reproducir el vídeo de fondo' : 'Pausar el vídeo de fondo';
+    };
+    if (reduce.matches) video.pause();
+    toggle?.addEventListener('click', () => {
+      if (video.paused) void video.play();
+      else video.pause();
+    });
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
+    sync();
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Foto/vídeo: panel derecho en escritorio, fondo superior en móvil. */
+  .hero-media {
+    position: absolute;
+    z-index: -2;
+    top: 0;
+    right: 0;
+    width: min(62%, 980px);
+    height: 100%;
+  }
+  .hero-media :global(.media),
+  .hero-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hero-media-drip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 34%;
+  }
+  .hero-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, var(--c-ink) 38%, rgb(9 9 9 / 0.75) 48%, rgb(9 9 9 / 0.1) 70%, transparent),
+      linear-gradient(0deg, var(--c-ink) 0%, rgb(9 9 9 / 0.6) 18%, transparent 42%),
+      radial-gradient(60% 50% at 80% 10%, transparent, rgb(9 9 9 / 0.35));
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    padding-top: calc(var(--nav-h) + 2rem);
+    padding-bottom: clamp(4.5rem, 9svh, 7rem);
+  }
+  .hero-logo {
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .hero-eyebrow {
+    margin-bottom: 1.25rem;
+    color: var(--c-white);
+  }
+  .hero-eyebrow span {
+    color: var(--c-lava-bright);
+  }
+
+  .hero-title {
+    font-size: clamp(3.2rem, min(7.6vw, 10.5svh), 8.25rem);
+    font-weight: 850;
+    font-stretch: 78%;
+    line-height: 0.86;
+    letter-spacing: -0.012em;
+    text-transform: uppercase;
+  }
+  .hero-title .line-mask {
+    padding-right: 0.08em;
+    white-space: nowrap;
+  }
+  .hero-red {
+    position: relative;
+    display: inline-block;
+    color: var(--c-lava);
+  }
+  /* Los goteos salen del pie de las letras: la máscara de línea no debe cortarlos. */
+  .hero-title .l3 {
+    overflow: visible;
+  }
+  .js .hero-title[data-reveal='lines'] .l3 > span {
+    opacity: 0;
+    transform: translateY(35%);
+    transition:
+      transform 1.1s var(--ease-out) 0.18s,
+      opacity 0.9s var(--ease-out) 0.18s;
+  }
+  .js .hero-title[data-reveal='lines'].is-in .l3 > span {
+    opacity: 1;
+    transform: none;
+  }
+  .title-drips {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% - 0.12em);
+  }
+
+  .hero-desc {
+    max-width: 32ch;
+    margin-top: clamp(3.25rem, 8svh, 4.75rem);
+    color: rgb(255 255 255 / 0.78);
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+  }
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.9rem;
+    margin-top: 2rem;
+  }
+
+  .hero-scroll {
+    position: absolute;
+    right: var(--gutter);
+    bottom: clamp(2.5rem, 5vw, 4rem);
+    display: grid;
+    justify-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 650;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .hero-scroll span:first-child {
+    writing-mode: vertical-rl;
+  }
+  .hero-scroll :global(.icon) {
+    width: 18px;
+    height: 18px;
+    animation: nudge 2.4s var(--ease-out) 3;
+  }
+  @keyframes nudge {
+    50% {
+      transform: translateY(6px);
+    }
+  }
+  .hero-pause {
+    position: absolute;
+    right: var(--gutter);
+    top: calc(var(--nav-h) + 1rem);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgb(255 255 255 / 0.4);
+    border-radius: 50%;
+  }
+  .hero-pause :global(.icon) {
+    width: 18px;
+  }
+  .hero-pending {
+    position: absolute;
+    right: calc(var(--gutter) + 3rem);
+    bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+  .hero-cracks {
+    position: absolute;
+    opacity: 0.7;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  @media (max-width: 899px) {
+    .hero {
+      align-items: flex-end;
+    }
+    .hero-media {
+      width: 100%;
+      height: 72%;
+    }
+    .hero-shade {
+      background: linear-gradient(0deg, var(--c-ink) 30%, rgb(9 9 9 / 0.7) 48%, rgb(9 9 9 / 0.15) 72%, rgb(9 9 9 / 0.45));
+    }
+    .hero-media-drip {
+      display: none;
+    }
+    /* Goteos del titular más cortos: no deben alcanzar la descripción. */
+    .title-drips {
+      transform: scaleY(0.6);
+      transform-origin: top;
+    }
+    .hero-desc {
+      margin-top: 3.25rem;
+    }
+    .hero-logo {
+      display: none;
+    }
+    .hero-content {
+      padding-top: 36svh;
+      padding-bottom: 3.5rem;
+    }
+    .hero-title {
+      font-size: clamp(3.3rem, 17vw, 5.5rem);
+    }
+    .hero-ctas :global(.btn) {
+      flex: 1 1 auto;
+    }
+    .hero-scroll {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,69 @@
+---
+/**
+ * CTA de reserva. Único punto que conoce el destino de Booksy.
+ * Sin URL confirmada: en producción no se renderiza; en desarrollo se muestra
+ * desactivado y etiquetado, para no simular un botón funcional.
+ */
+import { BOOKSY_URL } from '@/config/site';
+import { SHOW_PENDING } from '@/lib/pending';
+import Icon from './Icon.astro';
+
+interface Props {
+  label?: string;
+  variant?: 'lava' | 'ghost' | 'outline-lava';
+  size?: 'md' | 'lg';
+  arrow?: boolean;
+  class?: string;
+  /** Contexto para analítica futura / tests. */
+  placement: string;
+}
+
+const { label = 'Reservar en Booksy', variant = 'lava', size = 'md', arrow = true, class: className, placement } = Astro.props;
+const classes = ['btn', `btn--${variant}`, size === 'lg' && 'btn--lg', className];
+---
+
+{
+  BOOKSY_URL ? (
+    <a
+      class:list={classes}
+      href={BOOKSY_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-cta="booking"
+      data-placement={placement}
+    >
+      <span>{label}</span>
+      {arrow && <Icon name="arrow" class="arrow" />}
+      <span class="sr-only">(abre Booksy en una pestaña nueva)</span>
+    </a>
+  ) : (
+    SHOW_PENDING && (
+      <span class="cta-pending">
+        <span class:list={classes} aria-disabled="true" data-cta="booking" data-placement={placement}>
+          <span>{label}</span>
+          {arrow && <Icon name="arrow" class="arrow" />}
+        </span>
+        <span class="pending-tag">Pendiente · BOOKSY_URL</span>
+      </span>
+    )
+  )
+}
+
+<style>
+  .cta-pending {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+  .cta-pending [aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .cta-pending [aria-disabled='true']::before {
+    display: none;
+  }
+  .cta-pending [aria-disabled='true']:hover {
+    color: var(--btn-fg);
+  }
+</style>

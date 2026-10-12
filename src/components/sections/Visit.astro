@@ -1,0 +1,291 @@
+---
+/**
+ * Ubicación y contacto. Solo se enlazan canales confirmados.
+ * El relieve es una ilustración decorativa: sin marcador mientras no haya dirección real.
+ */
+import Icon, { type IconName } from '../ui/Icon.astro';
+import Pending from '../ui/Pending.astro';
+import { site, BOOKSY_URL } from '@/config/site';
+import { valueOf, SHOW_PENDING } from '@/lib/pending';
+import { contours } from '@/lib/lava';
+
+const address = valueOf(site.address);
+const mapsUrl = valueOf(site.mapsUrl);
+const directions = valueOf(site.directions);
+const hours = valueOf(site.hours);
+const phone = valueOf(site.phone);
+const email = valueOf(site.email);
+const instagram = valueOf(site.instagram);
+
+interface Channel {
+  icon: IconName;
+  label: string;
+  value?: string;
+  href?: string;
+  external?: boolean;
+  pendingKey: string;
+}
+
+const channels: Channel[] = [
+  { icon: 'phone', label: 'Teléfono', value: phone?.display, href: phone && `tel:${phone.e164}`, pendingKey: 'phone' },
+  { icon: 'instagram', label: 'Instagram', value: instagram && `@${instagram.handle}`, href: instagram?.url, external: true, pendingKey: 'instagram' },
+  { icon: 'mail', label: 'Email', value: email, href: email && `mailto:${email}`, pendingKey: 'email' },
+  { icon: 'map', label: 'Google Maps', value: mapsUrl && 'Cómo llegar', href: mapsUrl, external: true, pendingKey: 'mapsUrl' },
+  { icon: 'calendar', label: 'Booksy', value: BOOKSY_URL && 'Reservar cita', href: BOOKSY_URL, external: true, pendingKey: 'booksyUrl' },
+];
+const visibleChannels = channels.filter((c) => c.href || SHOW_PENDING);
+const relief = contours(1706, 600, 12);
+---
+
+<section id="visitanos" class="visit section surface-dark" aria-labelledby="visit-title">
+  <div class="visit-grid wrap">
+    <div class="visit-location">
+      <p class="eyebrow" data-reveal="rise">Ubicación</p>
+      <h2 id="visit-title" class="h2" data-reveal="lines">
+        <span class="line-mask"><span>Nos encontramos </span></span>
+        <span class="line-mask"><span>en {site.island}.</span></span>
+      </h2>
+
+      <dl class="facts">
+        {
+          (address || SHOW_PENDING) && (
+            <div class="fact">
+              <dt><Icon name="pin" /> Dirección</dt>
+              <dd>
+                {address ? (
+                  <address>
+                    {address.street}
+                    <br />
+                    {address.postalCode} {address.locality}, {site.island}
+                  </address>
+                ) : (
+                  <Pending label="dirección exacta" />
+                )}
+              </dd>
+            </div>
+          )
+        }
+        {
+          (directions || SHOW_PENDING) && (
+            <div class="fact">
+              <dt><Icon name="map" /> Cómo llegar</dt>
+              <dd>{directions ?? <Pending label="indicaciones / aparcamiento" />}</dd>
+            </div>
+          )
+        }
+        {
+          (hours || SHOW_PENDING) && (
+            <div class="fact">
+              <dt><Icon name="clock" /> Horario</dt>
+              <dd>
+                {hours ? (
+                  <ul>
+                    {hours.map((h) => (
+                      <li>
+                        {h.days}: {h.hours}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Pending label="horario" />
+                )}
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+
+      {
+        mapsUrl && (
+          <a class="btn btn--outline-lava" href={mapsUrl} target="_blank" rel="noopener noreferrer">
+            Abrir en Google Maps <Icon name="arrow" class="arrow" />
+            <span class="sr-only">(pestaña nueva)</span>
+          </a>
+        )
+      }
+    </div>
+
+    <figure class="relief" aria-hidden="true" data-reveal="mask">
+      <svg viewBox="0 0 600 600" focusable="false">
+        {relief.map((d, i) => <path d={d} fill="none" stroke={i === relief.length - 4 ? 'var(--c-lava)' : 'rgb(255 255 255 / .16)'} stroke-width={i === relief.length - 4 ? 1.6 : 1} />)}
+      </svg>
+      <figcaption>{site.island} · Islas Canarias</figcaption>
+    </figure>
+
+    {
+      visibleChannels.length > 0 && (
+        <div class="visit-contact">
+          <p class="eyebrow" data-reveal="rise">Contacto</p>
+          <h3 class="contact-title" data-reveal="rise">Hablemos.</h3>
+          <ul class="channels">
+            {visibleChannels.map((c) => (
+              <li>
+                {c.href ? (
+                  <a class="channel" href={c.href} {...(c.external && { target: '_blank', rel: 'noopener noreferrer' })}>
+                    <span class="ch-icon"><Icon name={c.icon} /></span>
+                    <span class="ch-text">
+                      <span class="ch-label">{c.label}</span>
+                      <span class="ch-value">{c.value}</span>
+                    </span>
+                    {c.external && <span class="sr-only">(pestaña nueva)</span>}
+                  </a>
+                ) : (
+                  <span class="channel channel--pending">
+                    <span class="ch-icon"><Icon name={c.icon} /></span>
+                    <span class="ch-text">
+                      <span class="ch-label">{c.label}</span>
+                      <Pending label={c.pendingKey} />
+                    </span>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .visit-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(1rem, 2vw, 2rem);
+    row-gap: clamp(3rem, 6vw, 5rem);
+  }
+  .visit-location {
+    grid-column: 1 / span 6;
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+    justify-items: start;
+  }
+  .facts {
+    display: grid;
+    gap: 1.4rem;
+    margin: 1.5rem 0 1rem;
+  }
+  .fact dt {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-ash);
+  }
+  .fact dt :global(.icon) {
+    width: 18px;
+    color: var(--c-lava-bright);
+  }
+  .fact dd {
+    margin: 0 0 0 1.7rem;
+  }
+  .fact address {
+    font-style: normal;
+  }
+
+  .relief {
+    position: relative;
+    grid-column: 8 / span 5;
+    grid-row: 1 / span 2;
+    align-self: start;
+    aspect-ratio: 1;
+    background:
+      radial-gradient(circle at 50% 50%, rgb(204 39 49 / 0.14), transparent 60%),
+      var(--c-ink-2);
+    border: 1px solid var(--c-line-dark);
+  }
+  .relief svg {
+    width: 100%;
+    height: 100%;
+  }
+  .relief figcaption {
+    position: absolute;
+    left: 1.2rem;
+    bottom: 1rem;
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--c-ash);
+  }
+
+  .visit-contact {
+    grid-column: 1 / span 7;
+  }
+  .contact-title {
+    margin: 1rem 0 1.5rem;
+    font-size: var(--fs-h2);
+    font-weight: 640;
+    font-stretch: 96%;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .channels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--c-line-dark);
+  }
+  .channel {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 64px;
+    padding-block: 1rem;
+    padding-right: 1rem;
+    border-bottom: 1px solid var(--c-line-dark);
+  }
+  .ch-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--c-line-dark);
+    border-radius: 50%;
+    transition:
+      background 0.3s,
+      border-color 0.3s;
+  }
+  .ch-icon :global(.icon) {
+    width: 18px;
+  }
+  a.channel:hover .ch-icon {
+    background: var(--c-lava);
+    border-color: var(--c-lava);
+  }
+  .ch-text {
+    display: grid;
+    gap: 0.2rem;
+    justify-items: start;
+  }
+  .ch-label {
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-ash);
+  }
+  .ch-value {
+    font-weight: 600;
+  }
+
+  @media (max-width: 899px) {
+    .visit-location,
+    .visit-contact {
+      grid-column: 1 / -1;
+    }
+    .relief {
+      grid-column: 1 / -1;
+      grid-row: auto;
+      aspect-ratio: 4 / 3;
+    }
+    .channels {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

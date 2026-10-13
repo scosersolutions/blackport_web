@@ -1,4 +1,4 @@
-import { confirmed, pending, valueOf, type Field } from '@/lib/pending';
+import { confirmed, valueOf, type Field } from '@/lib/pending';
 
 /**
  * Fuente única de los datos del negocio.
@@ -77,7 +77,7 @@ export const site: SiteConfig = {
   ]),
   phone: confirmed({ display: '677 81 78 33', e164: '+34677817833' }),
   // Se publicará cuando exista el buzón (junto al dominio): cambiar a confirmed('barberia@blackport.com').
-  email: pending('barberia@blackport.com (aún no creado)'),
+  email: confirmed('barberia@blackport.com'),
   instagram: confirmed({ handle: 'black.port_', url: 'https://www.instagram.com/black.port_/' }),
   googleReviewsUrl: confirmed(
     'https://www.google.com/maps/place/BARBER%C3%8DA+%E2%80%9CBLACK+PORT%E2%80%9D/@28.3739565,-26.4664224,6z/data=!4m12!1m2!2m1!1zQkFSQkVSw41BIOKAnEJMQUNLIFBPUlTigJ0!3m8!1s0xc6a7d4f952ee1f3:0x8055362f1a3dfe0d!8m2!3d28.3739565!4d-16.710563!9m1!1b1!15sChpCQVJCRVLDjUEg4oCcQkxBQ0sgUE9SVOKAnZIBC2JhcmJlcl9zaG9w4AEA!16s%2Fg%2F11ykvfs021?entry=ttu&g_ep=EgoyMDI2MTAxMS4wIKXMDSoASAFQAw%3D%3D',

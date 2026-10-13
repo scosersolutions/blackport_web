@@ -1,0 +1,172 @@
+---
+/**
+ * Medición. Inactiva hasta que se definan los IDs en .env (ver .env.example).
+ *
+ * - Umami (PUBLIC_UMAMI_ID): visitas y clics en los botones clave. No usa cookies ni
+ *   guarda nada en el dispositivo, así que no necesita aviso de consentimiento.
+ * - Microsoft Clarity (PUBLIC_CLARITY_ID): mapas de calor y grabaciones de sesión.
+ *   Usa cookies (_clck, _clsk): solo se carga después de que la persona acepte,
+ *   y se puede retirar el permiso desde el pie («Preferencias de cookies»).
+ *
+ * Eventos (Umami): reserva (con su ubicación en la página), llamar, como-llegar,
+ * instagram, email. Se nombran desde aquí; los componentes solo marcan data-cta/data-placement.
+ */
+const umamiId = import.meta.env.PUBLIC_UMAMI_ID?.trim() || undefined;
+const clarityId = import.meta.env.PUBLIC_CLARITY_ID?.trim() || undefined;
+---
+
+{umamiId && <script is:inline defer src="https://cloud.umami.is/script.js" data-website-id={umamiId} />}
+
+{
+  umamiId && (
+    <script is:inline>
+      (function () {
+        // Clic → evento. Delegado: cubre también lo que se añada después.
+        var classify = function (a) {
+          var href = a.getAttribute('href') || '';
+          if (a.dataset.cta === 'booking') return ['reserva', a.dataset.placement || 'otro'];
+          if (href.indexOf('tel:') === 0) return ['llamar'];
+          if (href.indexOf('mailto:') === 0) return ['email'];
+          if (/google\.[a-z.]+\/maps\/dir/.test(href)) return ['como-llegar'];
+          if (/instagram\.com/.test(href)) return ['instagram'];
+          return null;
+        };
+        document.addEventListener(
+          'click',
+          function (e) {
+            var a = e.target instanceof Element ? e.target.closest('a[href]') : null;
+            var ev = a && classify(a);
+            if (!ev || !window.umami) return;
+            window.umami.track(ev[0], ev[1] ? { ubicacion: ev[1].slice(0, 100) } : undefined);
+          },
+          { capture: true },
+        );
+      })();
+    </script>
+  )
+}
+
+{
+  clarityId && (
+    <div class="consent" data-consent hidden>
+      <p class="consent-text">
+        Usamos cookies de análisis (Microsoft Clarity) para ver cómo se usa la web y mejorarla. Solo se activan si
+        aceptas. <a href="/cookies">Más información</a>
+      </p>
+      <div class="consent-actions">
+        <button type="button" class="btn btn--ghost consent-btn" data-consent-choice="denied">
+          Rechazar
+        </button>
+        <button type="button" class="btn btn--ghost consent-btn" data-consent-choice="granted">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+{
+  clarityId && (
+    <script is:inline define:vars={{ clarityId }}>
+      (function () {
+        var KEY = 'bp-consent';
+        var box = document.querySelector('[data-consent]');
+        var read = function () {
+          try {
+            return localStorage.getItem(KEY);
+          } catch (e) {
+            return null;
+          }
+        };
+        var load = function () {
+          if (window.clarity) return;
+          // Etiqueta oficial de Clarity.
+          (function (c, l, a, r, i, t, y) {
+            c[a] =
+              c[a] ||
+              function () {
+                (c[a].q = c[a].q || []).push(arguments);
+              };
+            t = l.createElement(r);
+            t.async = 1;
+            t.src = 'https://www.clarity.ms/tag/' + i;
+            y = l.getElementsByTagName(r)[0];
+            y.parentNode.insertBefore(t, y);
+          })(window, document, 'clarity', 'script', clarityId);
+          window.clarity('consentv2', { ad_Storage: 'denied', analytics_Storage: 'granted' });
+        };
+        var choose = function (v) {
+          try {
+            localStorage.setItem(KEY, v);
+          } catch (e) {}
+          box.hidden = true;
+          if (v === 'granted') load();
+          // Retirada: Clarity borra sus cookies y sigue sin persistir nada.
+          else if (window.clarity) window.clarity('consentv2', { ad_Storage: 'denied', analytics_Storage: 'denied' });
+        };
+        box.addEventListener('click', function (e) {
+          var b = e.target instanceof Element ? e.target.closest('[data-consent-choice]') : null;
+          if (b) choose(b.getAttribute('data-consent-choice'));
+        });
+        // Enlaces «Preferencias de cookies» (pie y página de cookies).
+        document.addEventListener('click', function (e) {
+          var b = e.target instanceof Element ? e.target.closest('[data-consent-open]') : null;
+          if (!b) return;
+          e.preventDefault();
+          box.hidden = false;
+          var first = box.querySelector('button');
+          if (first) first.focus();
+        });
+        var saved = read();
+        if (saved === 'granted') load();
+        else if (saved !== 'denied') box.hidden = false;
+      })();
+    </script>
+  )
+}
+
+<style>
+  .consent {
+    position: fixed;
+    z-index: 120;
+    left: max(1rem, env(safe-area-inset-left));
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    max-width: 44rem;
+    margin-inline: auto;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 14px;
+    background: rgb(7 7 7 / 0.96);
+    color: var(--c-white);
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+  }
+  .consent[hidden] {
+    display: none;
+  }
+  .consent-text {
+    flex: 1 1 18rem;
+    font-size: var(--fs-small);
+    line-height: 1.5;
+    color: var(--c-bone);
+  }
+  .consent-text a {
+    color: var(--c-white);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .consent-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .consent-btn {
+    min-height: 44px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.72rem;
+  }
+</style>

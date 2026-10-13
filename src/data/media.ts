@@ -2,14 +2,11 @@ import type { ImageMetadata } from 'astro';
 import type { ServiceCategory } from './services';
 
 import logoPng from '@/assets/images/logo/blackport-logo.png';
-import rojoPerfilNoir from '@/assets/images/cortes/rojo-perfil-noir.jpg';
-import tinteGuantesNoir from '@/assets/images/barbero/barbero-tinte-guantes-noir.jpg';
-import staffNoir from '@/assets/images/barberia/staff-noir.jpg';
-import clienteRojoNoir from '@/assets/images/barbero/barbero-cliente-rojo-noir.jpg';
-import maquinaNucaNoir from '@/assets/images/cortes/maquina-nuca-rojo-noir.jpg';
-import tijeraNoir from '@/assets/images/barbero/barbero-tijera-noir.jpg';
-import mechasPapelNoir from '@/assets/images/cortes/mechas-papel-noir.jpg';
-import secadoRojoNoir from '@/assets/images/cortes/secado-rojo-noir.jpg';
+import tinteGuantes from '@/assets/images/barbero/barbero-tinte-guantes.jpg';
+import clienteRojo from '@/assets/images/barbero/barbero-cliente-rojo.jpg';
+import maquinaNuca from '@/assets/images/cortes/maquina-nuca-rojo.jpg';
+import tijera from '@/assets/images/barbero/barbero-tijera.jpg';
+import mechasPapel from '@/assets/images/cortes/mechas-papel.jpg';
 import rojoLateral from '@/assets/images/cortes/rojo-lateral.jpg';
 import espejoPuestos from '@/assets/images/barberia/espejo-puestos.jpg';
 import rojoNucaDiseno from '@/assets/images/cortes/rojo-nuca-diseno.jpg';
@@ -24,9 +21,12 @@ import staff from '@/assets/images/barberia/staff.jpg';
  * Registro central de fotografía y vídeo.
  *
  * Fotos: los originales están en `img/`. `node scripts/process-images.mjs`
- * genera las versiones web en `src/assets/images/` (color con grade suave y,
- * para piezas editoriales, `-noir`: B/N que conserva solo los rojos).
- * Astro las sirve en AVIF/WebP con varios tamaños.
+ * genera las versiones web en `src/assets/images/`. Astro las sirve en AVIF/WebP
+ * con varios tamaños.
+ *
+ * Dirección fotográfica: un único tratamiento en toda la web, blanco y negro
+ * (clase `.photo-mono`, token --photo-mono). El color real de los archivos solo se
+ * muestra de forma deliberada: en la galería, cuando la foto llega al centro.
  *
  * Vídeos: guardarlos en `public/videos/` (MP4 H.264 + WebM opcional) y
  * referenciarlos por ruta pública, p. ej. '/videos/presentacion.mp4'.
@@ -59,19 +59,10 @@ export const logo: ImageMetadata | undefined = logoPng;
 
 export const heroPhoto: Photo = {
   id: 'hero',
-  category: 'corte',
-  alt: 'Cliente de perfil con el pelo teñido de rojo, degradado bajo y línea de diseño',
-  src: rojoPerfilNoir,
-  focus: '35% 30%',
-};
-
-/** Segunda capa del hero: detalle de corte en color, más pequeño y por delante. */
-export const heroDetail: Photo = {
-  id: 'hero-detalle',
-  category: 'corte',
-  alt: 'Nuca con degradado, línea de diseño y tinte rojo',
-  src: rojoNucaDiseno,
-  focus: '50% 40%',
+  category: 'barbero',
+  alt: 'El barbero de BLACKPORT trabajando el pelo de un cliente con peine y tijera',
+  src: mechasPeinado,
+  focus: '50% 30%',
 };
 
 /** Vídeo de fondo del hero. Si se añade, sustituye a la foto (que pasa a ser su poster). */
@@ -91,14 +82,14 @@ export const aboutPhotos: { main: Photo; detail: Photo } = {
     id: 'sobre-barbero',
     category: 'barbero',
     alt: 'Barbero con guantes aplicando tinte rojo a un cliente',
-    src: tinteGuantesNoir,
+    src: tinteGuantes,
     focus: '40% 30%',
   },
   detail: {
     id: 'sobre-staff',
     category: 'barberia',
     alt: 'Barbero de espaldas con camiseta negra rotulada STAFF en rojo',
-    src: staffNoir,
+    src: staff,
     focus: '60% 50%',
   },
 };
@@ -109,28 +100,28 @@ export const servicePhotos: Record<ServiceCategory, Photo> = {
     id: 'servicio-corte',
     category: 'corte',
     alt: 'Repaso con máquina en la nuca de un cliente con tinte rojo',
-    src: maquinaNucaNoir,
+    src: maquinaNuca,
     focus: '40% 35%',
   },
   combo: {
     id: 'servicio-combo',
     category: 'barbero',
     alt: 'Barbero repasando el corte de un cliente con el pelo rojo',
-    src: clienteRojoNoir,
+    src: clienteRojo,
     focus: '50% 30%',
   },
   barba: {
     id: 'servicio-barba',
     category: 'barbero',
     alt: 'Barbero trabajando con peine y tijera frente al aro de luz',
-    src: tijeraNoir,
+    src: tijera,
     focus: '60% 35%',
   },
   color: {
     id: 'servicio-color',
     category: 'corte',
     alt: 'Barbero aplicando mechas con papel de aluminio',
-    src: mechasPapelNoir,
+    src: mechasPapel,
     focus: '50% 35%',
   },
 };
@@ -139,7 +130,7 @@ export const bookingPhoto: Photo = {
   id: 'reserva',
   category: 'corte',
   alt: 'Barbero secando con secador el tinte rojo de un cliente',
-  src: secadoRojoNoir,
+  src: secadoRojo,
   focus: '55% 30%',
 };
 

@@ -1,137 +1,98 @@
 ---
+/**
+ * Apertura. Una grieta de lava parte el nombre en BLACK | PORT y, al abrirse,
+ * descubre la foto desde la oscuridad. Con el scroll (escritorio, escena fijada)
+ * la grieta se abre hasta ocupar la pantalla y la foto pasa a dominarla.
+ *
+ * Capas: foto (DOM, nítida y con alt) → lienzo de magma (WebGL, interior transparente)
+ * → nombre y textos. Sin WebGL o con reduced-motion: grieta estática en CSS.
+ * Coreografía: scripts/motion/hero.ts.
+ */
 import { getImage } from 'astro:assets';
 import BookingCta from '../ui/BookingCta.astro';
 import MediaFrame from '../ui/MediaFrame.astro';
 import Icon from '../ui/Icon.astro';
-import LavaEdge from '../lava/LavaEdge.astro';
-import { heroPhoto, heroDetail, heroVideo, hasVideo } from '@/data/media';
+import { heroPhoto, heroVideo, hasVideo } from '@/data/media';
 import { site } from '@/config/site';
 import { valueOf } from '@/lib/pending';
 
 const withVideo = hasVideo(heroVideo);
 const poster = withVideo && heroPhoto.src ? await getImage({ src: heroPhoto.src, width: 853, format: 'webp' }) : undefined;
 const address = valueOf(site.address);
-const geo = valueOf(site.geo);
 const rating = valueOf(site.booksyRating);
 const ratingUrl = valueOf(site.booksyReviewsUrl);
 const place = address?.locality ?? site.island;
-const coords = geo && `${Math.abs(geo.lat).toFixed(2)}° N · ${Math.abs(geo.lng).toFixed(2)}° O`;
+const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits: 1 });
 ---
 
-<section id="inicio" class="hero surface-dark grain" aria-labelledby="hero-title" data-scene="hero">
-  <p class="hero-word" aria-hidden="true">Blackport</p>
-
-  <div class="hero-main" data-enter="mask" style="--i:0">
-    <div class="hero-main-inner">
-      {
-        withVideo ? (
-          <video class="hero-video" autoplay muted loop playsinline preload="metadata" poster={poster?.src} data-hero-video>
-            {heroVideo.webm && <source src={heroVideo.webm} type="video/webm" />}
-            {heroVideo.mp4 && <source src={heroVideo.mp4} type="video/mp4" />}
-          </video>
-        ) : (
-          <MediaFrame photo={heroPhoto} sizes="(min-width: 900px) 38vw, 100vw" widths={[480, 853]} priority />
-        )
-      }
-    </div>
-    <div class="hero-main-dim" aria-hidden="true"></div>
-  </div>
-  <span class="hero-cut" aria-hidden="true"></span>
-  <LavaEdge
-    class="hero-main-drip"
-    seed={7}
-    base={0}
-    amp={0}
-    width={300}
-    minWidth="0px"
-    fixed={[
-      { t: 0.22, len: 150, w: 13 },
-      { t: 0.3, len: 64, w: 8 },
-      { t: 0.82, len: 96, w: 10 },
-    ]}
-  />
-
-  <div class="hero-detail">
-    <figure class="hero-detail-frame" data-enter="mask" style="--i:6">
-      <MediaFrame photo={heroDetail} sizes="(min-width: 900px) 13vw, 1px" widths={[320, 480]} />
-    </figure>
-  </div>
-  <div class="hero-shade" aria-hidden="true"></div>
-
-  <div class="hero-content wrap">
-    <p class="eyebrow hero-eyebrow" data-enter style="--i:1">
-      <span class="idx">(00)</span> Barbería <span aria-hidden="true">/</span> {place}
-    </p>
-
-    <h1 id="hero-title" class="hero-title" data-enter="lines">
-      <span class="line-mask" style="--l:0"><span>Más que </span></span>
-      <span class="line-mask" style="--l:1"><span>un <span class="outline">corte,</span> </span></span>
-      <span class="line-mask l3" style="--l:2" data-fade>
-        <span class="hero-red">
-          un estilo.
-          <LavaEdge
-            class="title-drips"
-            seed={19}
-            base={0}
-            amp={0}
-            width={400}
-            minWidth="0px"
-            fixed={[
-              { t: 0.075, len: 34, w: 12 },
-              { t: 0.335, len: 22, w: 9 },
-              { t: 0.6, len: 30, w: 10 },
-              { t: 0.865, len: 118, w: 16 },
-            ]}
-          />
-        </span>
-      </span>
-    </h1>
-
-    <div class="hero-foot">
-      <p class="hero-desc" data-enter style="--i:7">
-        Cortes, degradados, barba a navaja y color con carácter propio. En {place}, {site.island}.
-      </p>
-      <div class="hero-ctas" data-enter style="--i:8">
-        <BookingCta label="Reservar cita" size="lg" placement="hero" magnetic />
-        <a class="btn btn--ghost btn--lg" href="#servicios">Ver la carta</a>
-      </div>
-      <div class="hero-meta" data-enter style="--i:9">
-        <p class="status" data-status hidden>
-          <span class="status-dot" aria-hidden="true"></span>
-          <span data-status-label></span>
-        </p>
+<section id="inicio" class="hero" aria-labelledby="hero-title" data-scene="hero">
+  <div class="hero-stage" data-hero-stage>
+    <div class="hero-photo" data-hero-photo data-intro-hide>
+      <div class="hero-photo-inner photo-mono" data-hero-photo-inner>
         {
-          rating && ratingUrl && (
-            <a class="hero-rating" href={ratingUrl} target="_blank" rel="noopener noreferrer">
-              <Icon name="star" filled />
-              <strong>{rating.value.toLocaleString('es-ES', { minimumFractionDigits: 1 })}</strong>
-              <span>· {rating.count} reseñas en Booksy</span>
-              <span class="sr-only">(pestaña nueva)</span>
-            </a>
+          withVideo ? (
+            <video class="media" autoplay muted loop playsinline preload="metadata" poster={poster?.src} data-hero-video>
+              {heroVideo.webm && <source src={heroVideo.webm} type="video/webm" />}
+              {heroVideo.mp4 && <source src={heroVideo.mp4} type="video/mp4" />}
+            </video>
+          ) : (
+            <MediaFrame photo={heroPhoto} sizes="(min-width: 900px) 67svh, 100vw" widths={[480, 853]} priority />
           )
         }
       </div>
+      <div class="hero-photo-dim" data-hero-dim aria-hidden="true"></div>
     </div>
+
+    <canvas class="hero-magma" data-magma="rift" aria-hidden="true"></canvas>
+
+    <h1 id="hero-title" class="hero-mark" aria-label={`${site.name}, barbería en ${place}, ${site.island}`}>
+      <span class="hm-half hm-a" data-hm="a" aria-hidden="true"><span class="hm-in" data-hm-in>Black</span></span>
+      <span class="hm-half hm-b" data-hm="b" aria-hidden="true"><span class="hm-in" data-hm-in>port</span></span>
+    </h1>
+
+    <p class="hero-tagline" data-hero-tagline aria-hidden="true">
+      <span>Más que un corte,</span>
+      <span>un estilo.</span>
+    </p>
+
+    <div class="hero-info" data-hero-info>
+      <div class="hero-lead" data-intro-hide>
+        <p class="hero-place">Barbería en {place}, {site.island}</p>
+        <p class="hero-desc">Más que un corte, un estilo. Degradados, barba a navaja y color con carácter propio.</p>
+      </div>
+      <div class="hero-actions" data-intro-hide>
+        <div class="hero-ctas">
+          <BookingCta label="Reservar cita" size="lg" placement="hero" magnetic />
+          <a class="btn btn--ghost btn--lg" href="#servicios">Ver la carta</a>
+        </div>
+        <div class="hero-meta">
+          <p class="status" data-status hidden>
+            <span class="status-dot" aria-hidden="true"></span>
+            <span data-status-label></span>
+          </p>
+          {
+            rating && ratingUrl && (
+              <a class="hero-rating" href={ratingUrl} target="_blank" rel="noopener noreferrer">
+                <Icon name="star" filled />
+                <strong>{ratingText}</strong>
+                <span>{rating.count} reseñas en Booksy</span>
+                <span class="sr-only">(pestaña nueva)</span>
+              </a>
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    {
+      withVideo && (
+        <button class="hero-pause" type="button" data-hero-toggle aria-pressed="false">
+          <Icon name="pause" />
+          <span class="sr-only">Pausar el vídeo de fondo</span>
+        </button>
+      )
+    }
   </div>
-
-  <p class="hero-rail" aria-hidden="true" data-enter="fade" style="--i:10">
-    <span>{place} — {site.island}</span>
-    {coords && <span>{coords}</span>}
-  </p>
-
-  {
-    withVideo && (
-      <button class="hero-pause" type="button" data-hero-toggle aria-pressed="false">
-        <Icon name="pause" />
-        <span class="sr-only">Pausar el vídeo de fondo</span>
-      </button>
-    )
-  }
-
-  <a class="hero-scroll" href="#sobre" data-enter="fade" style="--i:11">
-    <span class="hero-scroll-line" aria-hidden="true"></span>
-    <span class="sr-only">Ir a la siguiente sección</span>
-  </a>
 </section>
 
 <script>
@@ -157,180 +118,175 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(2)}° N · ${Math.abs(geo.lng
 </script>
 
 <style>
+  /*
+   * Geometría de la grieta (también la usa hero.ts):
+   *  --rift-x / --rift-y: eje de la grieta; --open: medio ancho abierto en reposo.
+   * Escritorio: grieta vertical en el centro. Móvil: horizontal, entre BLACK y PORT.
+   */
   .hero {
+    --rift-x: 50vw;
+    --open: 19svh;
     position: relative;
-    min-height: 100svh;
-    display: flex;
-    align-items: flex-end;
+    background: var(--c-ink);
+    color: var(--c-white);
+  }
+  .hero-stage {
+    position: relative;
+    height: 100svh;
+    min-height: 560px;
     overflow: hidden;
     isolation: isolate;
   }
 
-  /* ── Capa 1: rótulo gigante en contorno, se desliza con el scroll ── */
-  .hero-word {
+  /* ── Foto: bajo el magma, centrada en la grieta ── */
+  .hero-photo {
     position: absolute;
     z-index: 0;
-    left: -0.04em;
-    bottom: -0.2em;
-    font-size: clamp(7rem, 27vw, 30rem);
-    font-weight: 900;
-    font-stretch: 62%;
-    line-height: 0.8;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    color: transparent;
-    -webkit-text-stroke: 1px rgb(255 255 255 / 0.1);
-    pointer-events: none;
-    user-select: none;
-  }
-
-  /* ── Capa 2: foto principal vertical ── */
-  .hero-main {
-    position: absolute;
-    z-index: -2;
     top: 0;
     bottom: 0;
-    right: 6vw;
-    width: 37vw;
-    overflow: hidden;
-    background: var(--c-ink-2);
+    left: var(--rift-x);
+    width: calc(100svh * 2 / 3);
+    min-width: calc(560px * 2 / 3);
+    translate: -50% 0;
+    background: radial-gradient(60% 50% at 50% 50%, #3a0508, var(--c-ink) 70%);
   }
-  .hero-main-inner {
-    height: 100%;
-    transform-origin: 50% 30%;
-  }
-  .hero-main-dim {
+  .hero-photo-inner {
     position: absolute;
     inset: 0;
-    background: var(--c-ink);
-    opacity: 0;
-    pointer-events: none;
+    transform-origin: 50% 40%;
   }
-  /* Firma roja: un corte diagonal que atraviesa la escena al hacer scroll. */
-  .hero-cut {
-    position: absolute;
-    z-index: 3;
-    left: 50%;
-    top: 58%;
-    width: 140vw;
-    height: 4px;
-    background: linear-gradient(90deg, transparent, var(--c-lava) 15%, var(--c-lava-bright) 50%, var(--c-lava) 85%, transparent);
-    box-shadow: 0 0 22px rgb(240 68 76 / 0.5);
-    transform: translate(-50%, -50%) rotate(-9deg) scaleX(0);
-    pointer-events: none;
-  }
-  .hero-main :global(.media),
-  .hero-video {
+  .hero-photo-inner :global(.media) {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  .hero-main-drip {
+  /* Cubre todo el ancho: al final del scroll la foto escalada desborda su caja. */
+  .hero-photo-dim {
     position: absolute;
-    z-index: -1;
-    top: 0;
-    right: calc(6vw + 37vw - 13vw);
-    width: 13vw;
-  }
-
-  /* ── Capa 3: detalle en color, más cerca del espectador (sube más rápido) ── */
-  .hero-detail {
-    position: absolute;
-    z-index: 1;
-    left: 47vw;
-    bottom: 11svh;
-    width: 12.5vw;
-  }
-  .hero-detail-frame {
-    aspect-ratio: 4 / 5;
-    overflow: hidden;
-    box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.8);
-    outline: 1px solid rgb(255 255 255 / 0.12);
-    outline-offset: 6px;
-  }
-
-  .hero-shade {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background:
-      linear-gradient(90deg, var(--c-ink) 30%, rgb(9 9 9 / 0.55) 50%, transparent 66%),
-      linear-gradient(0deg, rgb(9 9 9 / 0.85) 0%, transparent 34%);
+    inset: 0 calc((100% - 100vw) / 2);
+    background: linear-gradient(transparent 55%, var(--c-ink)), rgb(7 7 7 / 0.35);
+    opacity: 0;
     pointer-events: none;
   }
 
-  /* ── Capa 4: texto ── */
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    /* La foto se ancla al viewport: el texto también, sin el tope de .wrap. */
-    max-width: none;
-    padding-top: calc(var(--nav-h) + 3rem);
-    padding-bottom: clamp(4.5rem, 10svh, 7rem);
-  }
-  .hero-eyebrow {
-    margin-bottom: clamp(1rem, 2.5svh, 1.75rem);
-    color: var(--c-white);
-  }
-  .hero-eyebrow span[aria-hidden] {
-    color: var(--c-lava-bright);
+  .hero-magma {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: block;
   }
 
-  .hero-title {
-    font-size: clamp(3.4rem, min(11.5vw, 15.5svh), 12.5rem);
-    font-weight: 860;
-    font-stretch: var(--wd-poster);
-    line-height: 0.84;
-    letter-spacing: -0.01em;
+  /* ── Nombre partido ── */
+  .hero-mark {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    margin: 0;
+    pointer-events: none;
+    font-size: clamp(5.5rem, min(12.5vw, 28svh), 16rem);
+    font-weight: 900;
+    font-stretch: 62%;
+    line-height: 0.8;
+    letter-spacing: -0.015em;
     text-transform: uppercase;
   }
-  .hero-title .line-mask {
-    padding-right: 0.08em;
-    white-space: nowrap;
-  }
-  .hero-title .outline {
-    -webkit-text-stroke-width: 2px;
-  }
-  .hero-red {
-    position: relative;
-    display: inline-block;
-    color: var(--c-lava);
-  }
-  /* Los goteos salen del pie de las letras: la máscara de línea no debe cortarlos. */
-  .hero-title .l3 {
-    overflow: visible;
-  }
-  .title-drips {
+  .hm-half {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% - 0.12em);
+    top: 46%;
+    display: block;
+    overflow: hidden;
+    padding-block: 0.08em 0.02em;
+    translate: 0 -50%;
+  }
+  .hm-in {
+    display: block;
+  }
+  .hm-a {
+    right: calc(100% - var(--rift-x));
+    padding-right: 0.06em;
+    color: var(--c-bone);
+    transform: translateX(calc(var(--open) * -1.15));
+  }
+  .hm-b {
+    left: var(--rift-x);
+    padding-left: 0.06em;
+    color: var(--c-lava);
+    transform: translateX(calc(var(--open) * 1.15));
   }
 
-  .hero-foot {
+  /* Frase que aparece sobre la foto a pantalla completa (escena fijada). */
+  .hero-tagline {
+    position: absolute;
+    z-index: 2;
+    left: var(--gutter);
+    right: var(--gutter);
+    top: 50%;
     display: grid;
-    justify-items: start;
-    gap: 1.4rem;
-    margin-top: clamp(3.4rem, 8svh, 5rem);
-    max-width: 44vw;
+    justify-items: center;
+    translate: 0 -50%;
+    font-size: clamp(2.6rem, 1rem + 5.6vw, 7rem);
+    font-weight: 300;
+    font-stretch: var(--wd-wide);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .hero-tagline span:last-child {
+    font-weight: 900;
+    font-stretch: 62%;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--c-bone);
+  }
+
+  /* ── Información y acciones ── */
+  .hero-info {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 0 var(--gutter) clamp(1.5rem, 4svh, 2.75rem);
+    background: linear-gradient(transparent, rgb(7 7 7 / 0.75) 45%);
+    padding-top: 4rem;
+  }
+  .hero-place {
+    font-size: var(--fs-small);
+    font-weight: 650;
+    color: var(--c-bone);
   }
   .hero-desc {
-    max-width: 34ch;
-    color: rgb(255 255 255 / 0.75);
-    font-size: var(--fs-lead);
+    max-width: 36ch;
+    margin-top: 0.4rem;
+    color: rgb(255 255 255 / 0.72);
+    font-size: var(--fs-body);
     line-height: 1.5;
+  }
+  .hero-actions {
+    display: grid;
+    justify-items: end;
+    gap: 0.9rem;
   }
   .hero-ctas {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 0.75rem;
   }
   .hero-meta {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 0.5rem;
-    margin-top: 0.2rem;
   }
   .hero-meta .status,
   .hero-rating {
@@ -338,7 +294,7 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(2)}° N · ${Math.abs(geo.lng
     padding: 0.45rem 0.9rem;
     border: 1px solid var(--c-line-dark);
     border-radius: 999px;
-    background: rgb(9 9 9 / 0.5);
+    background: rgb(7 7 7 / 0.6);
   }
   .hero-rating {
     display: inline-flex;
@@ -366,59 +322,10 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(2)}° N · ${Math.abs(geo.lng
     color: rgb(255 255 255 / 0.72);
   }
 
-  /* Raíl vertical con la ubicación. */
-  .hero-rail {
-    position: absolute;
-    right: calc(var(--gutter) * 0.6);
-    bottom: 18svh;
-    display: flex;
-    gap: 2.5rem;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    font-size: 0.64rem;
-    font-weight: 650;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: rgb(255 255 255 / 0.55);
-  }
-
-  .hero-scroll {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    display: block;
-    width: 44px;
-    height: 72px;
-    margin-left: -22px;
-  }
-  .hero-scroll-line {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    width: 1px;
-    height: 56px;
-    background: rgb(255 255 255 / 0.25);
-    overflow: hidden;
-  }
-  .hero-scroll-line::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--c-lava-bright);
-    animation: scroll-cue 2.2s var(--ease-liquid) infinite;
-  }
-  @keyframes scroll-cue {
-    from {
-      transform: translateY(-100%);
-    }
-    to {
-      transform: translateY(100%);
-    }
-  }
-
   .hero-pause {
     position: absolute;
-    right: calc(6vw + 1rem);
+    z-index: 3;
+    right: var(--gutter);
     top: calc(var(--nav-h) + 1rem);
     display: grid;
     place-items: center;
@@ -431,53 +338,133 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(2)}° N · ${Math.abs(geo.lng
     width: 18px;
   }
 
-  @media (max-width: 1199px) and (min-width: 900px) {
-    .hero-foot {
-      max-width: 52vw;
+  /* ── Grieta estática (sin WebGL o con reduced-motion) ── */
+  .hero:not(.has-magma) .hero-magma {
+    display: none;
+  }
+  .hero:not(.has-magma) .hero-photo {
+    clip-path: polygon(
+      calc(50% - var(--open) * 0.9) 0,
+      calc(50% + var(--open) * 1.05) 0,
+      calc(50% + var(--open) * 0.85) 22%,
+      calc(50% + var(--open) * 1.1) 47%,
+      calc(50% + var(--open) * 0.8) 71%,
+      calc(50% + var(--open) * 1) 100%,
+      calc(50% - var(--open) * 1.1) 100%,
+      calc(50% - var(--open) * 0.85) 76%,
+      calc(50% - var(--open) * 1.05) 49%,
+      calc(50% - var(--open) * 0.8) 26%
+    );
+  }
+  .hero:not(.has-magma) .hero-stage::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--rift-x) - var(--open) * 1.6);
+    width: calc(var(--open) * 3.2);
+    background: radial-gradient(50% 60% at 50% 50%, rgb(204 39 49 / 0.35), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Con intro: lo que entra en la coreografía empieza oculto (red de seguridad en Base). */
+  :global(html.intro-on:not(.intro-done)) .hero [data-intro-hide],
+  :global(html.intro-on:not(.intro-done)) .hero [data-hm-in] {
+    opacity: 0;
+  }
+
+  @media (max-width: 1099px) and (min-width: 900px) {
+    .hero-info {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .hero-actions {
+      justify-items: start;
     }
   }
 
+  /* ── Móvil: grieta horizontal entre las dos mitades del nombre ── */
   @media (max-width: 899px) {
-    .hero-main {
-      right: 0;
-      width: 100%;
-      bottom: auto;
-      height: 66svh;
+    .hero {
+      --rift-y: max(35svh, 250px);
+      --open: 13svh;
     }
-    .hero-main-drip,
-    .hero-detail,
-    .hero-rail,
-    .hero-scroll {
+    .hero-stage {
+      min-height: 700px;
+    }
+    .hero-photo {
+      left: 0;
+      right: 0;
+      top: var(--rift-y);
+      bottom: auto;
+      width: auto;
+      min-width: 0;
+      height: 150vw;
+      translate: 0 -50%;
+    }
+    .hero-mark {
+      font-size: clamp(4.6rem, 31vw, 9rem);
+    }
+    .hm-half {
+      top: auto;
+      translate: none;
+    }
+    .hm-a {
+      left: var(--gutter);
+      right: auto;
+      bottom: calc(100% - var(--rift-y));
+      padding-right: 0;
+      transform: translateY(calc(var(--open) * -1.1));
+    }
+    .hm-b {
+      right: var(--gutter);
+      left: auto;
+      top: var(--rift-y);
+      padding-left: 0;
+      transform: translateY(calc(var(--open) * 1.1));
+    }
+    .hero-info {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+      padding-top: 3rem;
+    }
+    .hero-desc {
       display: none;
     }
-    .hero-word {
-      bottom: auto;
-      top: calc(66svh - 0.62em);
-      font-size: 38vw;
-      -webkit-text-stroke-color: rgb(255 255 255 / 0.12);
-    }
-    .hero-shade {
-      background: linear-gradient(0deg, var(--c-ink) 36%, rgb(9 9 9 / 0.55) 52%, rgb(9 9 9 / 0.05) 72%, rgb(9 9 9 / 0.5));
-    }
-    .hero-content {
-      padding-top: 40svh;
-      padding-bottom: 2.5rem;
-    }
-    .hero-title {
-      font-size: clamp(3.2rem, 18.5vw, 6.5rem);
-    }
-    /* Goteos del titular más cortos: no deben alcanzar la descripción. */
-    .title-drips {
-      transform: scaleY(0.6);
-      transform-origin: top;
-    }
-    .hero-foot {
-      max-width: none;
+    .hero-actions {
       justify-items: stretch;
-      margin-top: 3rem;
+    }
+    .hero-ctas {
+      justify-content: stretch;
     }
     .hero-ctas :global(.btn) {
       flex: 1 1 auto;
+    }
+    .hero-meta {
+      justify-content: flex-start;
+    }
+    .hero:not(.has-magma) .hero-photo {
+      clip-path: polygon(
+        0 calc(50% - var(--open) * 0.9),
+        26% calc(50% - var(--open) * 1.05),
+        52% calc(50% - var(--open) * 0.85),
+        78% calc(50% - var(--open) * 1.08),
+        100% calc(50% - var(--open) * 0.9),
+        100% calc(50% + var(--open) * 1.05),
+        70% calc(50% + var(--open) * 0.85),
+        44% calc(50% + var(--open) * 1.1),
+        18% calc(50% + var(--open) * 0.88),
+        0 calc(50% + var(--open))
+      );
+    }
+    .hero:not(.has-magma) .hero-stage::before {
+      left: 0;
+      width: 100%;
+      top: calc(var(--rift-y) - var(--open) * 1.6);
+      bottom: auto;
+      height: calc(var(--open) * 3.2);
     }
   }
 </style>

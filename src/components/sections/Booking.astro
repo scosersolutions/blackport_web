@@ -1,43 +1,37 @@
 ---
-import MediaFrame from '../ui/MediaFrame.astro';
+/**
+ * Reserva: la escena de conversión, sobre un lago de lava (WebGL, lienzo «lake»)
+ * que se queda fijo mientras el contenido pasa por encima. Su borde superior sube
+ * como un frente de lava ondulado (scenes.ts) y su calor crece al entrar.
+ * Sin WebGL: degradado incandescente estático. El CTA no depende de nada de esto.
+ */
 import BookingCta from '../ui/BookingCta.astro';
 import Icon from '../ui/Icon.astro';
-import Pending from '../ui/Pending.astro';
-import LavaEdge from '../lava/LavaEdge.astro';
-import { bookingPhoto } from '@/data/media';
-import { site, BOOKSY_URL } from '@/config/site';
-import { valueOf } from '@/lib/pending';
-import { DAY_NAME, formatSlots } from '@/lib/hours';
+import { BOOKSY_URL } from '@/config/site';
 
-const hours = valueOf(site.hours);
 const ring = 'Reserva en Booksy · Reserva en Booksy · ';
 ---
 
-<section id="reservar" class="booking surface-dark grain" aria-labelledby="booking-title" data-scene="booking">
-  <LavaEdge class="booking-pour" seed={512} base={14} amp={9} drips={11} minLen={20} maxLen={190} minW={10} maxW={30} animate={false} />
-
-  <div class="booking-photo">
-    <MediaFrame photo={bookingPhoto} sizes="(min-width: 900px) 46vw, 100vw" widths={[480, 853]} />
-    <div class="booking-blinds" aria-hidden="true">
-      {Array.from({ length: 6 }, () => <i />)}
-    </div>
+<section id="reservar" class="booking" aria-labelledby="booking-title" data-scene="booking">
+  <div class="booking-bg" aria-hidden="true">
+    <canvas class="booking-magma" data-magma="lake"></canvas>
+    <div class="booking-shade"></div>
   </div>
-  <div class="booking-shade" aria-hidden="true"></div>
 
   <div class="booking-inner wrap">
     <div class="booking-main">
-      <p class="eyebrow" data-reveal="rise"><span class="idx">(04)</span> Reservas · Booksy</p>
+      <p class="eyebrow" data-reveal="rise">Reservas en Booksy</p>
       <h2 id="booking-title" class="booking-title" data-split="slide">
         <span class="line-mask"><span>Tu próximo </span></span>
         <span class="line-mask"><span><span class="outline">corte</span> </span></span>
-        <span class="line-mask"><span class="lava-text">empieza </span></span>
-        <span class="line-mask"><span class="lava-text">aquí. </span></span>
+        <span class="line-mask"><span>empieza </span></span>
+        <span class="line-mask"><span class="booking-hot">aquí. </span></span>
       </h2>
       <p class="booking-text" data-reveal="rise" style="--delay:.15s">
         Elige servicio, día y hora directamente en Booksy, a cualquier hora del día.
       </p>
       <div class="booking-cta" data-reveal="rise" style="--delay:.25s">
-        <BookingCta size="lg" placement="booking" />
+        <BookingCta size="lg" placement="booking" magnetic />
       </div>
     </div>
 
@@ -61,104 +55,86 @@ const ring = 'Reserva en Booksy · Reserva en Booksy · ';
       )
     }
 
-    <div class="booking-hours" data-reveal="rise" style="--delay:.3s">
-      <div class="bh-head">
-        <span class="bh-title"><Icon name="clock" /> Horario</span>
-        <p class="status" data-status hidden>
-          <span class="status-dot" aria-hidden="true"></span>
-          <span data-status-label></span>
-        </p>
-      </div>
-      {
-        hours ? (
-          <dl class="bh-list">
-            {hours.map((d) => (
-              <div class:list={['bh-row', !d.slots.length && 'is-closed']} data-day={d.day}>
-                <dt>{DAY_NAME[d.day]}</dt>
-                <dd>{formatSlots(d)}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <Pending label="horario de apertura" />
-        )
-      }
-    </div>
   </div>
 </section>
 
 <style>
   .booking {
+    --pad-top: clamp(8rem, 14vw, 13rem);
     position: relative;
-    padding-block: clamp(10rem, 15vw, 14rem) var(--section-y);
-    overflow: hidden;
+    z-index: 1;
+    /* Se solapa con el final de la carta: ahí sube el frente de lava (scenes.ts). */
+    margin-top: calc(var(--front-rise) * -1);
+    padding-block: var(--pad-top) clamp(9rem, 15vw, 14rem);
+    background: #160304;
+    color: var(--c-white);
+    overflow: clip;
     isolation: isolate;
   }
-  .booking-pour {
-    position: absolute;
-    inset: 0 0 auto;
-    z-index: 2;
-  }
-  .booking-photo {
-    position: absolute;
-    z-index: -2;
+  /* El lago queda fijo en pantalla mientras la sección pasa (sticky + margen negativo). */
+  .booking-bg {
+    position: sticky;
     top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(46%, 780px);
+    z-index: -1;
+    height: 100lvh;
+    margin-top: calc(var(--pad-top) * -1);
+    margin-bottom: calc(var(--pad-top) - 100lvh);
+    background:
+      radial-gradient(40% 30% at 70% 35%, rgb(255 90 30 / 0.35), transparent 70%),
+      radial-gradient(50% 40% at 20% 80%, rgb(204 39 49 / 0.4), transparent 70%),
+      #1a0405;
   }
-  .booking-photo :global(.media) {
-    height: 112%;
-  }
-  /* Persianas que se abren al llegar (solo con la coreografía completa activa). */
-  .booking-blinds {
+  .booking-magma {
     position: absolute;
     inset: 0;
-    display: none;
+    width: 100%;
+    height: 100%;
+    display: block;
   }
-  :global(html.motion-full) .booking-blinds {
-    display: flex;
-  }
-  .booking-blinds i {
-    flex: 1;
-    background: var(--c-ink);
-    transform-origin: 50% 0;
-  }
+  /* Velo de legibilidad: el texto siempre sobre costra oscura, nunca sobre el rojo. */
   .booking-shade {
     position: absolute;
     inset: 0;
-    z-index: -1;
     background:
-      linear-gradient(90deg, var(--c-ink) 50%, rgb(9 9 9 / 0.5) 68%, rgb(9 9 9 / 0.1)),
-      linear-gradient(0deg, var(--c-ink), transparent 30%);
+      linear-gradient(90deg, rgb(7 7 7 / 0.82) 0%, rgb(7 7 7 / 0.55) 48%, rgb(7 7 7 / 0.1) 75%),
+      linear-gradient(0deg, rgb(7 7 7 / 0.5), transparent 40%);
   }
 
   .booking-inner {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    grid-template-areas: 'main orb' 'hours orb';
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-areas: 'main orb';
     column-gap: 3rem;
     row-gap: clamp(3rem, 6vw, 5rem);
   }
   .booking-main {
     grid-area: main;
   }
+  .booking .eyebrow {
+    color: rgb(255 255 255 / 0.75);
+  }
   .booking-title {
     margin-block: 1.4rem 1.6rem;
-    font-size: clamp(3rem, 0.8rem + 8.4vw, 9.5rem);
-    font-weight: 860;
+    font-size: clamp(3.2rem, 0.8rem + 8.6vw, 10rem);
+    font-weight: 880;
     font-stretch: var(--wd-poster);
-    line-height: 0.9;
+    line-height: 0.88;
     text-transform: uppercase;
+  }
+  .booking-title :global(.outline) {
+    -webkit-text-stroke-color: rgb(255 255 255 / 0.9);
+  }
+  .booking-hot {
+    color: var(--c-lava-bright);
+    text-shadow: 0 0 40px rgb(255 90 30 / 0.45);
   }
   .booking-text {
     max-width: 38ch;
-    color: rgb(255 255 255 / 0.78);
+    color: rgb(255 255 255 / 0.82);
     font-size: var(--fs-lead);
   }
   .booking-cta {
-    display: none;
     margin-top: 2.25rem;
   }
 
@@ -170,7 +146,7 @@ const ring = 'Reserva en Booksy · Reserva en Booksy · ';
     position: relative;
     display: grid;
     place-items: center;
-    width: clamp(190px, 17vw, 250px);
+    width: clamp(200px, 18vw, 260px);
     aspect-ratio: 1;
     border-radius: 50%;
     color: var(--c-white);
@@ -196,9 +172,10 @@ const ring = 'Reserva en Booksy · Reserva en Booksy · ';
     aspect-ratio: 1;
     border-radius: 50%;
     background: var(--c-lava);
+    box-shadow: 0 0 60px rgb(255 90 30 / 0.35);
     font-size: 0.82rem;
     font-weight: 750;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     overflow: hidden;
     isolation: isolate;
@@ -234,96 +211,16 @@ const ring = 'Reserva en Booksy · Reserva en Booksy · ';
     outline-offset: 6px;
   }
 
-  /* ── Horario ── */
-  .booking-hours {
-    grid-area: hours;
-    max-width: 30rem;
-  }
-  .bh-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-bottom: 0.9rem;
-    border-bottom: 2px solid var(--c-white);
-  }
-  .bh-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.72rem;
-    font-weight: 650;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-  .bh-title :global(.icon) {
-    width: 18px;
-    color: var(--c-lava-bright);
-  }
-  .bh-list {
-    margin: 0;
-  }
-  .bh-row {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.7rem 0;
-    border-bottom: 1px solid var(--c-line-dark);
-    font-size: var(--fs-small);
-  }
-  .bh-row dt {
-    color: var(--c-ash);
-  }
-  .bh-row dd {
-    margin: 0;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-  }
-  .bh-row.is-closed dd {
-    color: var(--c-ash);
-  }
-  .bh-row:global(.is-today) dt,
-  .bh-row:global(.is-today) dd {
-    color: var(--c-white);
-    font-weight: 700;
-  }
-  .bh-row:global(.is-today) dt::after {
-    content: 'Hoy';
-    margin-left: 0.6rem;
-    padding: 0.18rem 0.45rem;
-    border-radius: 999px;
-    background: var(--c-lava);
-    color: var(--c-white);
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    vertical-align: 0.1em;
-  }
-
   @media (max-width: 899px) {
-    .booking {
-      padding-top: 64vw;
-    }
-    .booking-photo {
-      width: 100%;
-      bottom: auto;
-      height: 82vw;
-    }
     .booking-shade {
-      background: linear-gradient(0deg, var(--c-ink) 42%, rgb(9 9 9 / 0.3) 75%, rgb(9 9 9 / 0.5));
+      background: linear-gradient(0deg, rgb(7 7 7 / 0.7), rgb(7 7 7 / 0.55) 50%, rgb(7 7 7 / 0.35));
     }
     .booking-inner {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: 'main' 'hours';
+      grid-template-areas: 'main';
     }
     .orb {
       display: none;
-    }
-    .booking-cta {
-      display: block;
     }
     .booking-cta :global(.btn) {
       width: 100%;

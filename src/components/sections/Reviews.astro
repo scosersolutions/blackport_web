@@ -1,34 +1,51 @@
 ---
 /**
- * Reseñas. Solo datos reales: la valoración publicada en Booksy (con su fecha)
- * y enlaces a las fichas de Booksy y Google. Las citas textuales solo se muestran
- * si se añaden a `src/data/reviews.ts` con permiso.
+ * Reseñas. Solo datos reales:
+ * - Valoración media y número de reseñas publicados en Booksy (con la fecha del dato).
+ * - Reseñas individuales: solo las de src/data/reviews.ts (textos literales, con autor,
+ *   fecha y estrellas reales). Si no hay ninguna, se enlaza a las fichas de Booksy y Google.
+ * Se muestran como mensajes en un panel con scroll propio (rueda, táctil o teclado:
+ * el panel es enfocable). Nada se mueve solo; los mensajes aparecen al entrar en el panel.
  */
 import Icon from '../ui/Icon.astro';
 import Pending from '../ui/Pending.astro';
-import LavaSplatter from '../lava/LavaSplatter.astro';
+import LavaFlow from '../lava/LavaFlow.astro';
 import { reviews, SOURCE_LABEL, type ReviewSource } from '@/data/reviews';
 import { site } from '@/config/site';
-import { valueOf } from '@/lib/pending';
+import { valueOf, SHOW_PENDING } from '@/lib/pending';
 
 const rating = valueOf(site.booksyRating);
-const sources: Array<{ id: ReviewSource; url?: string; field: string; hint: string }> = [
-  { id: 'booksy', url: valueOf(site.booksyReviewsUrl), field: 'booksyReviewsUrl', hint: 'Reseñas verificadas de clientes' },
-  { id: 'google', url: valueOf(site.googleReviewsUrl), field: 'googleReviewsUrl', hint: 'Opiniones en Google Maps' },
+const sources: Array<{ id: ReviewSource; url?: string; field: string; label: string }> = [
+  {
+    id: 'booksy',
+    url: valueOf(site.booksyReviewsUrl),
+    field: 'booksyReviewsUrl',
+    label: rating ? `Leer las ${rating.count} reseñas` : 'Leer las reseñas',
+  },
+  { id: 'google', url: valueOf(site.googleReviewsUrl), field: 'googleReviewsUrl', label: 'Ver opiniones' },
 ];
 const monthFmt = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
-const dateFmt = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+const dayFmt = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const initials = (name: string): string =>
+  name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+/** Tono del avatar, estable por nombre: tres materiales de la paleta. */
+const tone = (name: string): number => [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 3;
 const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 ---
 
-<section id="resenas" class="reviews section surface-light" aria-labelledby="reviews-title" data-scene="reviews">
+<section id="resenas" class="reviews surface-light" aria-labelledby="reviews-title" data-scene="reviews">
+  <LavaFlow class="reviews-lava" seed={31} from="magma" count={10} maxLen={120} maxW={24} />
+
   <div class="reviews-grid wrap">
     {
       rating && (
-        <div class="score" role="img" aria-label={`Valoración media en Booksy: ${ratingText} de 5, con ${rating.count} reseñas`}>
-          <span class="score-blob" aria-hidden="true" />
+        <div class="score" data-score>
           <p class="score-num" aria-hidden="true">
-            <span data-count={rating.value} data-decimals="1">
+            <span class="score-fill" data-count={rating.value} data-decimals="1">
               {ratingText}
             </span>
           </p>
@@ -39,16 +56,16 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
               </span>
             ))}
           </p>
-          <p class="score-cap" aria-hidden="true">
-            {rating.count} reseñas en Booksy · {monthFmt.format(new Date(rating.asOf))}
+          <p class="score-cap">
+            <span class="sr-only">Valoración media de {ratingText} sobre 5 en Booksy, </span>
+            {rating.count} reseñas en Booksy, {monthFmt.format(new Date(rating.asOf))}
           </p>
-          <LavaSplatter class="score-splat" seed={41} />
         </div>
       )
     }
 
     <div class="reviews-side">
-      <p class="eyebrow" data-reveal="rise"><span class="idx">(05)</span> Reseñas</p>
+      <p class="eyebrow" data-reveal="rise">Reseñas</p>
       <h2 id="reviews-title" class="h2" data-split="chars">
         <span class="line-mask"><span>Lo que dicen </span></span>
         <span class="line-mask"><span><span class="outline">nuestros</span> </span></span>
@@ -56,20 +73,77 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
       </h2>
 
       {
-        reviews.length > 0 && (
-          <ul class="quotes">
-            {reviews.map((r) => (
-              <li>
-                <blockquote class="quote">
-                  <p class="quote-text">{r.text}</p>
-                  <footer class="quote-meta">
-                    — {r.author} · {SOURCE_LABEL[r.source]}
-                    {r.date && <span> · {dateFmt.format(new Date(r.date))}</span>}
-                  </footer>
-                </blockquote>
-              </li>
-            ))}
-          </ul>
+        reviews.length > 0 ? (
+          <div class="wall" data-wall>
+            <div class="wall-bar">
+              <span class="wall-badge" aria-hidden="true">B</span>
+              <p class="wall-title">
+                Reseñas verificadas
+                <span>{reviews.length} de {rating?.count ?? reviews.length} · Booksy</span>
+              </p>
+              <span class="wall-stars" aria-hidden="true">
+                {Array.from({ length: 5 }, () => <Icon name="star" filled />)}
+              </span>
+            </div>
+            <div
+              class="wall-scroll"
+              tabindex="0"
+              role="region"
+              aria-label={`Reseñas de clientes (${reviews.length}). Desplázate para leer más.`}
+              data-wall-scroll
+            >
+              <ul class="msgs">
+                {reviews.map((r, i) => (
+                  <li class:list={['msg', i % 2 && 'msg--alt']} data-msg>
+                    <span class={`msg-avatar tone-${tone(r.author)}`} aria-hidden="true">
+                      {initials(r.author)}
+                    </span>
+                    <article class="msg-bubble" aria-label={`Reseña de ${r.author}`}>
+                      <header class="msg-head">
+                        <span class="msg-author">{r.author}</span>
+                        <span class="msg-verified">
+                          <Icon name="check" /> Cliente verificado
+                        </span>
+                      </header>
+                      {r.rating && (
+                        <p class="msg-stars" role="img" aria-label={`${r.rating} de 5 estrellas`}>
+                          {Array.from({ length: 5 }, (_, k) => (
+                            <span class:list={['msg-star', k >= (r.rating ?? 0) && 'is-off']}>
+                              <Icon name="star" filled />
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                      <blockquote class="msg-text" lang={r.lang}>
+                        <p>{r.text}</p>
+                      </blockquote>
+                      <footer class="msg-foot">
+                        {r.service && <span class="msg-service">{r.service}</span>}
+                        {r.date && <time datetime={r.date}>{dayFmt.format(new Date(r.date))}</time>}
+                        <span class="sr-only">, en {SOURCE_LABEL[r.source]}</span>
+                      </footer>
+                    </article>
+                  </li>
+                ))}
+              </ul>
+              {sources[0].url && (
+                <p class="msgs-end">
+                  ¿Quieres leer más?{' '}
+                  <a href={sources[0].url} target="_blank" rel="noopener noreferrer">
+                    {sources[0].label} en Booksy<span class="sr-only"> (pestaña nueva)</span>
+                  </a>
+                </p>
+              )}
+            </div>
+            <p class="wall-hint" aria-hidden="true" data-wall-hint>
+              Desliza para leer más <Icon name="arrow" class="arrow" />
+            </p>
+          </div>
+        ) : (
+          <>
+            <p class="reviews-note">Las reseñas completas, con nombre y fecha, se publican en Booksy y en Google.</p>
+            {SHOW_PENDING && <Pending label="citas de reseñas reales (src/data/reviews.ts)" />}
+          </>
         )
       }
 
@@ -80,7 +154,7 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
               {src.url ? (
                 <a class="source" href={src.url} target="_blank" rel="noopener noreferrer">
                   <span class="source-name">{SOURCE_LABEL[src.id]}</span>
-                  <span class="source-hint">{src.hint}</span>
+                  <span class="source-hint">{src.label}</span>
                   <span class="source-go" aria-hidden="true">
                     <Icon name="arrow" />
                   </span>
@@ -100,41 +174,79 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
   </div>
 </section>
 
+<script>
+  // Panel de mensajes: cada reseña aparece al entrar en el panel (no al cargar la página)
+  // y la pista «Desliza» se retira en cuanto se desplaza.
+  const wall = document.querySelector<HTMLElement>('[data-wall]');
+  const scroller = wall?.querySelector<HTMLElement>('[data-wall-scroll]');
+  if (wall && scroller) {
+    const hint = wall.querySelector<HTMLElement>('[data-wall-hint]');
+    const onScroll = (): void => {
+      if (scroller.scrollTop > 40) hint?.classList.add('is-gone');
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+      wall.classList.add('is-armed');
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            e.target.classList.add('is-in');
+            io.unobserve(e.target);
+          }
+        },
+        { root: scroller, threshold: 0.15 },
+      );
+      scroller.querySelectorAll('[data-msg]').forEach((m) => io.observe(m));
+    }
+  }
+</script>
+
 <style>
+  .reviews {
+    position: relative;
+    z-index: 1;
+    /* Reserva el espacio de la lava que cae desde la reserva. */
+    padding-top: clamp(11rem, 18vw, 17rem);
+    padding-bottom: var(--section-y);
+  }
+  .reviews-lava {
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+  }
   .reviews-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     gap: clamp(2.5rem, 6vw, 6rem);
     align-items: center;
   }
 
-  .score {
-    position: relative;
-    isolation: isolate;
-  }
-  /* Mancha roja tras la nota: se expande con el scroll (GSAP). */
-  .score-blob {
-    position: absolute;
-    z-index: -1;
-    left: 34%;
-    top: 34%;
-    width: clamp(9rem, 22vw, 22rem);
-    aspect-ratio: 1;
-    border-radius: 58% 42% 55% 45% / 48% 60% 40% 52%;
-    background: var(--c-lava);
-    transform: translate(-50%, -50%);
-  }
+  /* La nota se «funde»: el rojo sube por las cifras con el scroll (--fill, scenes.ts). */
   .score-num {
-    transform-origin: 20% 80%;
-  }
-  .score-num {
+    --fill: 1;
     font-size: clamp(9rem, 4rem + 20vw, 24rem);
     font-weight: 900;
     font-stretch: 62%;
     line-height: 0.78;
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
+  }
+  .score-fill {
+    display: inline-block;
+    padding-top: 0.06em;
     color: var(--c-ink);
+    background: linear-gradient(
+      0deg,
+      var(--c-magma) 0%,
+      var(--c-lava) calc(var(--fill) * 100% - 6%),
+      var(--c-ink) calc(var(--fill) * 100% + 2%)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   .score-stars {
     display: flex;
@@ -144,7 +256,7 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
   .star {
     display: grid;
     place-items: center;
-    width: clamp(30px, 3vw, 42px);
+    width: clamp(28px, 2.6vw, 38px);
     aspect-ratio: 1;
     color: var(--c-lava);
   }
@@ -162,21 +274,20 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
   }
   .score-cap {
     margin-top: 1rem;
-    font-size: 0.75rem;
-    font-weight: 650;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    font-size: var(--fs-small);
+    font-weight: 600;
     color: var(--c-ash-ink);
-  }
-  .score-splat {
-    position: absolute;
-    right: 6%;
-    top: -2rem;
-    width: clamp(5rem, 9vw, 8rem);
   }
 
   .reviews-side .h2 {
     margin-top: 1.25rem;
+  }
+  .reviews-note {
+    max-width: 40ch;
+    margin-top: 1.5rem;
+    color: var(--c-ash-ink);
+    font-size: var(--fs-lead);
+    line-height: 1.5;
   }
   .sources {
     margin-top: clamp(2rem, 4vw, 3rem);
@@ -193,9 +304,9 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
   }
   .source-name {
     grid-area: name;
-    font-size: clamp(1.6rem, 1rem + 2vw, 2.8rem);
-    font-weight: 820;
-    font-stretch: var(--wd-tight);
+    font-size: clamp(1.8rem, 1rem + 2.4vw, 3.2rem);
+    font-weight: 860;
+    font-stretch: var(--wd-poster);
     line-height: 1;
     text-transform: uppercase;
     transition: transform 0.5s var(--ease-out);
@@ -205,20 +316,20 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
     margin-top: 0.35rem;
     color: var(--c-ash-ink);
     font-size: var(--fs-small);
+    font-weight: 600;
   }
   .source-go {
     grid-area: go;
     display: grid;
     place-items: center;
-    width: 52px;
-    height: 52px;
-    border: 1px solid rgb(9 9 9 / 0.3);
+    width: 56px;
+    height: 56px;
+    border: 1px solid rgb(7 7 7 / 0.3);
     border-radius: 50%;
     transition:
       background 0.35s,
       border-color 0.35s,
-      color 0.35s,
-      transform 0.45s var(--ease-out);
+      color 0.35s;
   }
   .source-go :global(.icon) {
     width: 22px;
@@ -237,32 +348,296 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
     transform: none;
   }
 
-  .quotes {
-    display: grid;
+  /* ── Panel de mensajes ── */
+  .wall {
+    position: relative;
     margin-top: 2rem;
+    border-radius: 26px;
+    background: var(--c-ink);
+    color: var(--c-white);
+    box-shadow: 0 40px 80px -30px rgb(7 7 7 / 0.55);
+    overflow: hidden;
+    isolation: isolate;
   }
-  .quote {
-    margin: 0;
-    padding: 1.5rem 0;
-    border-bottom: 1px solid var(--c-line-light);
+  /* Brasa al fondo del panel: el calor de la escena anterior, contenido. */
+  .wall::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    right: -20%;
+    bottom: -35%;
+    width: 80%;
+    height: 70%;
+    background: radial-gradient(closest-side, rgb(204 39 49 / 0.28), transparent);
+    pointer-events: none;
   }
-  .quote-text {
-    font-size: var(--fs-lead);
-    line-height: 1.5;
+  .wall-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--c-line-dark);
+    background: var(--c-ink-2);
   }
-  .quote-meta {
-    margin-top: 0.75rem;
-    color: var(--c-ash-ink);
-    font-size: var(--fs-small);
+  .wall-badge {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--c-lava);
+    font-size: 1.3rem;
+    font-weight: 900;
+    font-stretch: 62%;
+  }
+  .wall-title {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 750;
+    line-height: 1.25;
+  }
+  .wall-title span {
+    color: var(--c-ash);
+    font-size: 0.75rem;
     font-weight: 600;
+  }
+  .wall-stars {
+    display: flex;
+    gap: 2px;
+    color: var(--c-lava-bright);
+  }
+  .wall-stars :global(.icon) {
+    width: 15px;
+    height: 15px;
+  }
+
+  .wall-scroll {
+    height: clamp(24rem, 62svh, 36rem);
+    overflow-y: auto;
+    padding: 1.5rem 1.25rem 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-lava) transparent;
+    /* Bordes que se funden: indican que hay más arriba y abajo. */
+    -webkit-mask-image: linear-gradient(transparent, #000 1.5rem, #000 calc(100% - 3rem), transparent);
+    mask-image: linear-gradient(transparent, #000 1.5rem, #000 calc(100% - 3rem), transparent);
+  }
+  .wall-scroll:focus-visible {
+    outline: 2px solid var(--c-lava-bright);
+    outline-offset: -4px;
+  }
+  .wall-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .wall-scroll::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: var(--c-lava);
+  }
+
+  .msgs {
+    display: grid;
+    gap: 1.1rem;
+  }
+  .msg {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.7rem;
+    max-width: 92%;
+  }
+  .msg--alt {
+    flex-direction: row-reverse;
+    margin-left: auto;
+  }
+  .msg-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+  .tone-0 {
+    background: var(--c-lava);
+  }
+  .tone-1 {
+    background: var(--c-lava-deep);
+  }
+  .tone-2 {
+    background: var(--c-bone);
+    color: var(--c-ink);
+  }
+  .msg-bubble {
+    min-width: 0;
+    padding: 0.95rem 1.1rem 0.8rem;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 18px 18px 18px 4px;
+    background: var(--c-ink-3);
+  }
+  .msg--alt .msg-bubble {
+    border-color: rgb(240 68 76 / 0.22);
+    border-radius: 18px 18px 4px 18px;
+    background: #2a1416;
+  }
+  .msg-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.6rem;
+  }
+  .msg-author {
+    font-size: 0.95rem;
+    font-weight: 750;
+  }
+  .msg-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--c-ash);
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .msg-verified :global(.icon) {
+    width: 12px;
+    height: 12px;
+    color: var(--c-lava-bright);
+  }
+  .msg-stars {
+    display: flex;
+    gap: 2px;
+    margin-top: 0.35rem;
+    color: var(--c-lava-bright);
+  }
+  .msg-star {
+    display: inline-grid;
+    width: 15px;
+    height: 15px;
+  }
+  .msg-star :global(.icon) {
+    width: 100%;
+    height: 100%;
+  }
+  .msg-star.is-off {
+    color: rgb(255 255 255 / 0.18);
+  }
+  .msg-text {
+    margin: 0.55rem 0 0;
+  }
+  .msg-text p {
+    color: var(--c-bone);
+    font-size: clamp(1rem, 0.92rem + 0.3vw, 1.12rem);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .msg-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+    margin-top: 0.7rem;
+    color: var(--c-ash);
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .msg-service {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--c-line-dark);
+    border-radius: 999px;
+    color: var(--c-bone);
+  }
+  .msgs-end {
+    margin: 1.75rem 0 2.5rem;
+    color: var(--c-ash);
+    font-size: var(--fs-small);
+    text-align: center;
+  }
+  .msgs-end a {
+    color: var(--c-white);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--c-lava);
+    text-underline-offset: 4px;
+  }
+
+  /* Entrada de cada mensaje (solo con movimiento; la activa el script). */
+  .wall:global(.is-armed) .msg {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+    transform-origin: left bottom;
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.7s var(--ease-out);
+  }
+  .wall:global(.is-armed) .msg--alt {
+    transform-origin: right bottom;
+  }
+  .wall:global(.is-armed) .msg:global(.is-in) {
+    opacity: 1;
+    transform: none;
+  }
+
+  .wall-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    background: var(--c-lava);
+    color: var(--c-white);
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    translate: -50% 0;
+    pointer-events: none;
+    transition:
+      opacity 0.4s,
+      translate 0.4s var(--ease-out);
+  }
+  .wall-hint :global(.arrow) {
+    width: 13px;
+    height: 13px;
+    rotate: 90deg;
+  }
+  .wall-hint:global(.is-gone) {
+    opacity: 0;
+    translate: -50% 10px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .wall-hint :global(.arrow) {
+      animation: nudge 1.6s var(--ease-out) infinite;
+    }
+  }
+  @keyframes nudge {
+    50% {
+      transform: translateX(3px);
+    }
   }
 
   @media (max-width: 899px) {
     .reviews-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
-    .reviews-side {
-      order: -1;
+    .wall {
+      margin-inline: calc(var(--gutter) * -0.5);
+      border-radius: 22px;
+    }
+    .wall-scroll {
+      height: min(68svh, 34rem);
+      padding-inline: 0.9rem;
+    }
+    .msg {
+      max-width: 100%;
+    }
+    .wall-stars {
+      display: none;
     }
   }
 </style>

@@ -3,7 +3,6 @@ import { getImage } from 'astro:assets';
 import MediaFrame from '../ui/MediaFrame.astro';
 import Icon from '../ui/Icon.astro';
 import BookingCta from '../ui/BookingCta.astro';
-import LavaEdge from '../lava/LavaEdge.astro';
 import { gallery, CATEGORY_LABEL } from '@/data/media';
 import { SHOW_PENDING } from '@/lib/pending';
 import { BOOKSY_URL } from '@/config/site';
@@ -22,18 +21,18 @@ const total = String(items.length).padStart(2, '0');
 const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 'tall'];
 ---
 
-<section id="galeria" class="gallery surface-light" aria-labelledby="gallery-title" data-hscroll>
+<section id="galeria" class="gallery surface-dark" aria-labelledby="gallery-title" data-hscroll>
   <div class="g-pin">
     <header class="g-head wrap">
       <div>
-        <p class="eyebrow" data-reveal="rise"><span class="idx">(03)</span> Galería</p>
+        <p class="eyebrow" data-reveal="rise">Galería</p>
         <h2 id="gallery-title" class="h2" data-split="chars">
           <span class="line-mask"><span>Cortes, estilo, </span></span>
           <span class="line-mask"><span class="lava-text">personalidad. </span></span>
         </h2>
       </div>
       <div class="g-aside" data-reveal="rise" style="--delay:.15s">
-        <p class="muted">El detalle también es parte del corte. Trabajo real, hecho en BLACKPORT.</p>
+        <p class="muted">Trabajo real, hecho en BLACKPORT. En blanco y negro hasta que llega al centro: ahí recupera su color.</p>
         <div class="g-controls">
           <p class="g-counter" aria-hidden="true">
             <span data-g-current>01</span> / {total}
@@ -80,20 +79,6 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
                 <span>{String(i + 1).padStart(2, '0')}</span>
                 {CATEGORY_LABEL[photo.category]}
               </p>
-              {i === 2 && (
-                <LavaEdge
-                  class="g-drip"
-                  seed={123}
-                  base={0}
-                  amp={0}
-                  width={200}
-                  minWidth="0px"
-                  fixed={[
-                    { t: 0.35, len: 90, w: 10 },
-                    { t: 0.7, len: 40, w: 7 },
-                  ]}
-                />
-              )}
             </li>
           ))
         }
@@ -256,12 +241,12 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     color: var(--c-ash-ink);
   }
   .g-counter span {
-    color: var(--c-ink);
+    color: var(--c-white);
   }
   .g-bar {
     flex: 1;
     height: 2px;
-    background: var(--c-line-light);
+    background: var(--c-line-dark);
     overflow: hidden;
   }
   .g-bar i {
@@ -280,7 +265,7 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     place-items: center;
     width: 46px;
     height: 46px;
-    border: 1px solid rgb(9 9 9 / 0.3);
+    border: 1px solid rgb(255 255 255 / 0.3);
     border-radius: 50%;
     transition:
       background 0.3s,
@@ -288,9 +273,9 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
       border-color 0.3s;
   }
   .g-arrow:hover {
-    background: var(--c-ink);
-    border-color: var(--c-ink);
-    color: var(--c-white);
+    background: var(--c-bone);
+    border-color: var(--c-bone);
+    color: var(--c-ink);
   }
   .g-arrow :global(.icon) {
     width: 20px;
@@ -310,7 +295,7 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     text-transform: uppercase;
     white-space: nowrap;
     color: transparent;
-    -webkit-text-stroke: 1px rgb(9 9 9 / 0.1);
+    -webkit-text-stroke: 1px rgb(255 255 255 / 0.08);
     pointer-events: none;
     user-select: none;
   }
@@ -392,11 +377,19 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     --h: 44svh;
     margin-top: -1svh;
   }
+  /* Calor: 0 = blanco y negro; 1 = color real. Lo fija gallery.ts según la distancia
+     al centro de la pantalla (o al pasar por encima). El brillo rojo es el reflejo del calor. */
   .g-frame {
+    --heat: 0;
     height: var(--h);
     aspect-ratio: 2 / 3;
     overflow: hidden;
     background: var(--c-ink-2);
+    box-shadow: 0 40px 80px -40px rgb(204 39 49 / calc(var(--heat) * 0.55));
+    transform-style: preserve-3d;
+  }
+  .g-frame :global(.media) {
+    filter: grayscale(calc(1 - var(--heat))) contrast(1.1) brightness(calc(0.86 + var(--heat) * 0.14));
   }
   .g-btn {
     position: relative;
@@ -416,9 +409,17 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     margin-left: -12%;
   }
   .g-btn :global(.media) {
+    transition: transform 1.2s var(--ease-out);
+  }
+  /* Carrusel (móvil / reduced-motion): el cambio de calor se funde. */
+  .gallery:not(.is-pinned) .g-frame :global(.media) {
     transition:
       transform 1.2s var(--ease-out),
-      filter 0.6s;
+      filter 0.8s var(--ease-out);
+  }
+  .g-btn:hover,
+  .g-btn:focus-visible {
+    --heat: 1;
   }
   .g-btn:hover :global(.media),
   .g-btn:focus-visible :global(.media) {
@@ -460,18 +461,10 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     font-weight: 650;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--c-ash-ink);
+    color: var(--c-ash);
   }
   .g-cap span {
-    color: var(--c-lava-ink);
-  }
-  .g-drip {
-    position: absolute;
-    left: 10%;
-    top: var(--h);
-    width: 40%;
-    z-index: 1;
-    margin-top: -4px;
+    color: var(--c-lava-bright);
   }
 
   .g-end {

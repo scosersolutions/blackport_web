@@ -1,10 +1,12 @@
 /**
- * Galería: recorrido horizontal.
+ * Galería: recorrido horizontal con fotografía que «se calienta».
  * - Escritorio con movimiento: el panel se fija (ScrollTrigger) y el scroll vertical
  *   mueve la pista; cada foto se desplaza dentro de su marco, la pista se inclina con
- *   la velocidad y el rótulo de fondo va en sentido contrario.
+ *   la velocidad y el rótulo de fondo va en sentido contrario. Con puntero fino, la foto
+ *   bajo el cursor gira en 3D con su imagen desplazada en profundidad.
  * - Móvil o reduced-motion: carrusel nativo con scroll horizontal y snap.
- * Contador, barra y flechas funcionan en ambos modos.
+ * En ambos modos las fotos están en B/N y recuperan su color real al acercarse al
+ * centro de la pantalla (--heat), y contador, barra y flechas funcionan igual.
  */
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -34,21 +36,47 @@ const setProgress = ({ section, items }: GalleryEls, p: number): void => {
   if (current) current.textContent = String(idx + 1).padStart(2, '0');
 };
 
+/** Calor de cada foto según su distancia al centro horizontal de la pantalla. */
+const updateHeat = ({ items }: GalleryEls): void => {
+  const mid = window.innerWidth / 2;
+  const reach = Math.max(260, window.innerWidth * 0.3);
+  for (const item of items) {
+    const frame = item.firstElementChild as HTMLElement | null;
+    if (!frame) continue;
+    const r = item.getBoundingClientRect();
+    const d = Math.abs(r.left + r.width / 2 - mid);
+    const k = Math.max(0, 1 - d / reach);
+    frame.style.setProperty('--heat', (k * k * (3 - 2 * k)).toFixed(3));
+  }
+};
+
 /** Controles comunes (siempre activos). */
 export function setupGalleryControls(): void {
   const g = els();
   if (!g) return;
   const { section, viewport, items } = g;
 
+  let queued = false;
+  const heat = (): void => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      updateHeat(g);
+    });
+  };
   viewport.addEventListener(
     'scroll',
     () => {
+      heat();
       if (pinTrigger) return;
       const range = viewport.scrollWidth - viewport.clientWidth;
       setProgress(g, range > 0 ? viewport.scrollLeft / range : 0);
     },
     { passive: true },
   );
+  window.addEventListener('resize', heat);
+  heat();
 
   const step = (dir: 1 | -1): void => {
     const width = (items[0]?.offsetWidth ?? 300) + 24;
@@ -97,6 +125,7 @@ export function galleryPinScene(): () => void {
       invalidateOnRefresh: true,
       onUpdate: (self) => {
         setProgress(g, self.progress);
+        updateHeat(g);
         skewTo(gsap.utils.clamp(-5, 5, self.getVelocity() / -450));
       },
       onScrubComplete: () => skewTo(0),
@@ -150,10 +179,44 @@ export function galleryPinScene(): () => void {
     });
   }
 
+  // Profundidad: la foto bajo el cursor gira hacia él; su imagen se desplaza al revés.
+  if (fine.matches) {
+    items.forEach((item) => {
+      const frame = item.firstElementChild as HTMLElement | null;
+      const pic = item.querySelector('picture');
+      if (!frame || !pic) return;
+      gsap.set(frame, { transformPerspective: 900 });
+      const rx = gsap.quickTo(frame, 'rotationX', { duration: 0.6, ease: 'power3' });
+      const ry = gsap.quickTo(frame, 'rotationY', { duration: 0.6, ease: 'power3' });
+      const iy = gsap.quickTo(pic, 'y', { duration: 0.8, ease: 'power3' });
+      const move = (e: PointerEvent): void => {
+        const r = frame.getBoundingClientRect();
+        const nx = (e.clientX - r.left) / r.width - 0.5;
+        const ny = (e.clientY - r.top) / r.height - 0.5;
+        ry(nx * 10);
+        rx(ny * -8);
+        iy(ny * -14);
+      };
+      const leave = (): void => {
+        rx(0);
+        ry(0);
+        iy(0);
+      };
+      frame.addEventListener('pointermove', move);
+      frame.addEventListener('pointerleave', leave);
+      cleanups.push(() => {
+        frame.removeEventListener('pointermove', move);
+        frame.removeEventListener('pointerleave', leave);
+        gsap.set([frame, pic], { clearProps: 'transform' });
+      });
+    });
+  }
+
   return () => {
     cleanups.forEach((c) => c());
     pinTrigger = null;
     section.classList.remove('is-pinned');
+    requestAnimationFrame(() => updateHeat(g));
   };
 }
 

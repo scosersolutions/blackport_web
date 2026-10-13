@@ -1,14 +1,16 @@
 ---
 /**
  * Ubicación y contacto. Solo se enlazan canales confirmados.
- * El relieve es una ilustración: el marcador indica el local, el mapa real se abre en Google Maps.
+ * Mapa real: OpenStreetMap incrustado (sin claves ni cookies de seguimiento), en tono
+ * obsidiana. Queda «dormido» tras un escudo hasta que se activa, para que el scroll
+ * de la página no se quede atrapado en él (sobre todo en móvil).
+ * «Cómo llegar» abre la ruta en Google Maps hacia la dirección confirmada.
  */
 import Icon, { type IconName } from '../ui/Icon.astro';
 import Pending from '../ui/Pending.astro';
 import { site, BOOKSY_URL } from '@/config/site';
 import { valueOf, SHOW_PENDING } from '@/lib/pending';
 import { groupHours } from '@/lib/hours';
-import { contours } from '@/lib/lava';
 
 const address = valueOf(site.address);
 const geo = valueOf(site.geo);
@@ -18,6 +20,16 @@ const phone = valueOf(site.phone);
 const email = valueOf(site.email);
 const instagram = valueOf(site.instagram);
 const amenities = valueOf(site.amenities);
+
+const fullAddress = address && `${address.street}, ${address.postalCode} ${address.locality}, ${address.region}`.replace(/ /g, ' ');
+const directionsUrl = fullAddress && `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`;
+// Encuadre ~calle a calle alrededor del local.
+const mapSrc =
+  geo &&
+  `https://www.openstreetmap.org/export/embed.html?bbox=${[geo.lng - 0.0042, geo.lat - 0.0024, geo.lng + 0.0042, geo.lat + 0.0024]
+    .map((n) => n.toFixed(5))
+    .join('%2C')}&layer=mapnik&marker=${geo.lat.toFixed(6)}%2C${geo.lng.toFixed(6)}`;
+const osmUrl = geo && `https://www.openstreetmap.org/?mlat=${geo.lat.toFixed(6)}&mlon=${geo.lng.toFixed(6)}#map=18/${geo.lat.toFixed(5)}/${geo.lng.toFixed(5)}`;
 
 interface Channel {
   icon: IconName;
@@ -35,14 +47,12 @@ const channels: Channel[] = [
   { icon: 'mail', label: 'Email', value: email, href: email && `mailto:${email}`, pendingKey: 'email' },
 ];
 const visibleChannels = channels.filter((c) => c.href || SHOW_PENDING);
-const relief = contours(1706, 600, 12);
-const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng).toFixed(4)}° O`;
 ---
 
 <section id="visitanos" class="visit section surface-dark" aria-labelledby="visit-title" data-scene="visit">
   <div class="visit-grid wrap">
     <header class="visit-head">
-      <p class="eyebrow" data-reveal="rise"><span class="idx">(06)</span> Visítanos</p>
+      <p class="eyebrow" data-reveal="rise">Dónde estamos</p>
       <h2 id="visit-title" class="h2" data-split="chars">
         <span class="line-mask"><span>Ven a </span></span>
         <span class="line-mask"><span><span class="outline">vernos.</span> </span></span>
@@ -52,12 +62,12 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     <div class="visit-info">
       {
         address ? (
-          <address class="visit-address" data-reveal="rise">
-            <span>{address.street}</span>
-            <span>
+          <address class="visit-address">
+            <span class="va-line">{address.street}</span>
+            <span class="va-line">
               {address.postalCode} {address.locality}
             </span>
-            <span class="muted">{address.region}</span>
+            <span class="va-region">{address.region}</span>
           </address>
         ) : (
           SHOW_PENDING && <Pending label="dirección exacta" />
@@ -66,10 +76,10 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
 
       <div class="visit-actions" data-reveal="rise" style="--delay:.1s">
         {
-          mapsUrl && (
-            <a class="btn btn--lava" href={mapsUrl} target="_blank" rel="noopener noreferrer">
+          directionsUrl && (
+            <a class="btn btn--lava" href={directionsUrl} target="_blank" rel="noopener noreferrer">
               Cómo llegar <Icon name="arrow" class="arrow" />
-              <span class="sr-only">(abre Google Maps en una pestaña nueva)</span>
+              <span class="sr-only">(ruta en Google Maps, pestaña nueva)</span>
             </a>
           )
         }
@@ -130,40 +140,47 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     </div>
 
     {
-      mapsUrl ? (
-        <a class="relief" href={mapsUrl} target="_blank" rel="noopener noreferrer" data-reveal="frame">
-          <svg viewBox="0 0 600 600" aria-hidden="true" focusable="false">
-            {relief.map((d, i) => (
-              <path
-                class="contour"
-                d={d}
-                fill="none"
-                stroke={i === relief.length - 4 ? 'var(--c-lava)' : 'rgb(255 255 255 / .16)'}
-                stroke-width={i === relief.length - 4 ? 1.6 : 1}
-              />
-            ))}
-          </svg>
-          <span class="pin" aria-hidden="true" data-pin>
-            <Icon name="pin" />
-          </span>
-          <span class="relief-label">
-            <strong>{site.name}</strong>
-            {address && <span>{address.locality} · {site.island}</span>}
-          </span>
-          {coords && <span class="relief-coords" aria-hidden="true">{coords}</span>}
-          <span class="relief-open" aria-hidden="true">
-            Abrir mapa <Icon name="arrow" />
-          </span>
-          <span class="sr-only">Ver la ubicación de {site.name} en Google Maps (pestaña nueva)</span>
-        </a>
-      ) : (
-        <figure class="relief" aria-hidden="true" data-reveal="frame">
-          <svg viewBox="0 0 600 600" focusable="false">
-            {relief.map((d) => (
-              <path d={d} fill="none" stroke="rgb(255 255 255 / .16)" stroke-width="1" />
-            ))}
-          </svg>
+      mapSrc ? (
+        <figure class="map" data-map>
+          <div class="map-window" data-map-window>
+            <iframe
+              class="map-frame"
+              title={`Mapa: ubicación de ${site.name} en ${address?.locality ?? site.island}`}
+              src={mapSrc}
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              tabindex="-1"
+              data-map-frame
+            />
+            <button class="map-shield" type="button" data-map-activate>
+              <span class="map-pin" aria-hidden="true">
+                <Icon name="pin" />
+              </span>
+              <span class="map-hint">Explorar el mapa</span>
+            </button>
+          </div>
+          <figcaption class="map-cap">
+            <span>
+              {address?.locality}, {site.island}
+            </span>
+            <span class="map-links">
+              {mapsUrl && (
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                  Google Maps
+                  <span class="sr-only">(ficha del local, pestaña nueva)</span>
+                </a>
+              )}
+              {osmUrl && (
+                <a href={osmUrl} target="_blank" rel="noopener noreferrer">
+                  OpenStreetMap
+                  <span class="sr-only">(pestaña nueva)</span>
+                </a>
+              )}
+            </span>
+          </figcaption>
         </figure>
+      ) : (
+        SHOW_PENDING && <Pending label="coordenadas del local" />
       )
     }
 
@@ -202,6 +219,20 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
   </div>
 </section>
 
+<script>
+  // Activar el mapa: retira el escudo y le da el foco.
+  const map = document.querySelector<HTMLElement>('[data-map]');
+  const shield = map?.querySelector<HTMLButtonElement>('[data-map-activate]');
+  const frame = map?.querySelector<HTMLIFrameElement>('[data-map-frame]');
+  if (map && shield && frame) {
+    shield.addEventListener('click', () => {
+      map.classList.add('is-live');
+      frame.removeAttribute('tabindex');
+      frame.focus();
+    });
+  }
+</script>
+
 <style>
   .visit-grid {
     display: grid;
@@ -217,7 +248,7 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     font-size: clamp(3rem, 1rem + 7vw, 8.5rem);
   }
   .visit-info {
-    grid-column: 1 / span 6;
+    grid-column: 1 / span 5;
     grid-row: 2;
     display: grid;
     gap: 2rem;
@@ -228,17 +259,21 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     display: grid;
     font-style: normal;
     font-size: clamp(1.5rem, 1rem + 1.6vw, 2.4rem);
-    font-weight: 760;
+    font-weight: 780;
     font-stretch: var(--wd-tight);
     line-height: 1.1;
     text-transform: uppercase;
   }
-  .visit-address .muted {
-    margin-top: 0.4rem;
+  .va-line {
+    display: block;
+  }
+  .va-region {
+    margin-top: 0.5rem;
     font-size: var(--fs-small);
     font-weight: 600;
     font-stretch: 100%;
-    letter-spacing: 0.16em;
+    text-transform: none;
+    color: var(--c-ash);
   }
   .visit-actions {
     display: flex;
@@ -258,11 +293,9 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     align-items: center;
     gap: 0.6rem;
     margin-bottom: 0.6rem;
-    font-size: 0.7rem;
-    font-weight: 650;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--c-ash);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--c-white);
   }
   .fact dt :global(.icon) {
     width: 18px;
@@ -270,10 +303,8 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
   }
   .fact dt .status {
     margin-left: auto;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-    text-transform: none;
-    color: var(--c-white);
+    font-size: 0.78rem;
+    font-weight: 600;
   }
   .fact dd {
     margin: 0;
@@ -282,7 +313,7 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding-block: 0.5rem;
+    padding-block: 0.55rem;
     border-bottom: 1px solid var(--c-line-dark);
     font-size: var(--fs-small);
   }
@@ -305,31 +336,51 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     font-size: var(--fs-small);
   }
 
-  /* ── Relieve con marcador ── */
-  .relief {
-    position: relative;
-    grid-column: 8 / span 5;
+  /* ── Mapa ── */
+  .map {
+    grid-column: 7 / -1;
     grid-row: 1 / span 2;
-    align-self: start;
-    display: block;
-    aspect-ratio: 4 / 5;
-    overflow: hidden;
-    background:
-      radial-gradient(circle at 50% 50%, rgb(204 39 49 / 0.16), transparent 60%),
-      var(--c-ink-2);
-    border: 1px solid var(--c-line-dark);
+    align-self: stretch;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 0.9rem;
+    min-height: 34rem;
   }
-  .relief svg {
+  .map-window {
+    position: relative;
+    overflow: hidden;
+    background: var(--c-ink-2);
+    border: 1px solid var(--c-line-dark);
+    clip-path: inset(0 0 0 0 round 2px);
+  }
+  /* Tono obsidiana: el mapa claro se invierte y se desatura (no se toca su contenido). */
+  .map-frame {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    transition: transform 1.4s var(--ease-out);
+    border: 0;
+    filter: grayscale(1) invert(0.92) contrast(0.92) brightness(0.92);
+    pointer-events: none;
   }
-  a.relief:hover svg {
-    transform: scale(1.08) rotate(-2deg);
+  .map.is-live .map-frame {
+    pointer-events: auto;
   }
-  .pin {
+  .map-shield {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    background: radial-gradient(circle at 50% 50%, transparent 0, transparent 22%, rgb(7 7 7 / 0.35) 75%);
+    transition: opacity 0.4s var(--ease-out);
+  }
+  .map.is-live .map-shield {
+    opacity: 0;
+    visibility: hidden;
+  }
+  /* Marcador de lava sobre la posición exacta (el centro del encuadre). */
+  .map-pin {
     position: absolute;
     left: 50%;
     top: 50%;
@@ -340,14 +391,15 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     margin: -52px 0 0 -26px;
     border-radius: 50% 50% 50% 0;
     background: var(--c-lava);
+    color: var(--c-white);
     transform: rotate(-45deg);
-    box-shadow: 0 10px 30px rgb(204 39 49 / 0.45);
+    box-shadow: 0 10px 30px rgb(204 39 49 / 0.5);
   }
-  .pin :global(.icon) {
+  .map-pin :global(.icon) {
     width: 22px;
     transform: rotate(45deg);
   }
-  .pin::after {
+  .map-pin::after {
     content: '';
     position: absolute;
     left: 0;
@@ -355,57 +407,52 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 2px solid var(--c-lava);
+    border: 2px solid var(--c-lava-bright);
     transform: translate(-50%, 50%) rotate(45deg);
     animation: ping 2.4s var(--ease-out) infinite;
   }
-  .relief-label {
+  .map-hint {
     position: absolute;
     left: 50%;
-    top: calc(50% + 1.2rem);
-    display: grid;
-    justify-items: center;
-    gap: 0.2rem;
-    transform: translateX(-50%);
-    text-align: center;
+    bottom: 1.25rem;
+    translate: -50% 0;
+    padding: 0.65rem 1.1rem;
+    border-radius: 999px;
+    background: rgb(7 7 7 / 0.8);
+    border: 1px solid var(--c-line-dark);
+    font-size: var(--fs-small);
+    font-weight: 650;
     white-space: nowrap;
+    transition: background 0.3s;
+  }
+  .map-shield:hover .map-hint,
+  .map-shield:focus-visible .map-hint {
+    background: var(--c-lava);
+  }
+  .map-shield:focus-visible {
+    outline-offset: -4px;
+  }
+  .map-cap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    color: var(--c-ash);
     font-size: var(--fs-small);
   }
-  .relief-label strong {
-    font-size: 1.1rem;
-    font-weight: 820;
-    font-stretch: var(--wd-tight);
-    letter-spacing: 0.04em;
+  .map-links {
+    display: flex;
+    gap: 1.25rem;
   }
-  .relief-label span {
-    color: var(--c-ash);
-  }
-  .relief-coords,
-  .relief-open {
-    position: absolute;
-    bottom: 1rem;
-    font-size: 0.66rem;
-    font-weight: 650;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--c-ash);
-  }
-  .relief-coords {
-    left: 1.2rem;
-  }
-  .relief-open {
-    right: 1.2rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+  .map-links a {
     color: var(--c-white);
+    font-weight: 650;
+    text-decoration: underline;
+    text-decoration-color: var(--c-lava);
+    text-underline-offset: 0.3em;
   }
-  .relief-open :global(.icon) {
-    width: 18px;
-    transition: transform 0.4s var(--ease-out);
-  }
-  a.relief:hover .relief-open :global(.icon) {
-    transform: translateX(5px);
+  .map-links a:hover {
+    color: var(--c-lava-bright);
   }
 
   /* ── Canales ── */
@@ -450,10 +497,8 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     justify-items: start;
   }
   .ch-label {
-    font-size: 0.68rem;
-    font-weight: 650;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 600;
     color: var(--c-ash);
   }
   .ch-value {
@@ -465,10 +510,13 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
     .visit-info {
       grid-column: 1 / -1;
     }
-    .relief {
+    .map {
       grid-column: 1 / -1;
       grid-row: auto;
-      aspect-ratio: 4 / 3;
+      min-height: 0;
+    }
+    .map-window {
+      aspect-ratio: 4 / 5;
     }
     .visit-actions {
       width: 100%;

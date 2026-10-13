@@ -1,0 +1,145 @@
+---
+/**
+ * Política de cookies. Refleja lo que realmente se carga según .env:
+ * si una herramienta no está activa, no se menciona como si lo estuviera.
+ */
+import Base from '@/layouts/Base.astro';
+import Logo from '@/components/Logo.astro';
+import { site } from '@/config/site';
+import { valueOf } from '@/lib/pending';
+
+const umami = Boolean(import.meta.env.PUBLIC_UMAMI_ID?.trim());
+const clarity = Boolean(import.meta.env.PUBLIC_CLARITY_ID?.trim());
+const email = valueOf(site.email);
+const address = valueOf(site.address);
+---
+
+<Base title={`Cookies · ${site.name}`} description={`Qué cookies y almacenamiento usa la web de ${site.name} y cómo gestionarlos.`}>
+  <main id="contenido" class="legal surface-dark">
+    <div class="wrap legal-wrap">
+      <a class="legal-home" href="/" aria-label={`Volver a la web de ${site.name}`}><Logo width={96} /></a>
+      <h1 class="legal-title">Cookies</h1>
+
+      <p>
+        Esta web es de {site.name}{address && `, ${address.street}, ${address.postalCode} ${address.locality}`}. Aquí
+        explicamos qué guarda en tu dispositivo y para qué.
+      </p>
+
+      <h2>Técnicas (no requieren consentimiento)</h2>
+      <ul>
+        <li>
+          <code>bp-intro</code> (almacenamiento de sesión): recuerda que ya has visto la animación de entrada para
+          acortarla. Se borra al cerrar la pestaña.
+        </li>
+        {
+          clarity && (
+            <li>
+              <code>bp-consent</code> (almacenamiento local): guarda si aceptaste o rechazaste las cookies de análisis.
+            </li>
+          )
+        }
+      </ul>
+
+      {
+        umami && (
+          <>
+            <h2>Estadísticas sin cookies</h2>
+            <p>
+              Usamos Umami para contar visitas y clics en botones como «Reservar» o «Llamar». No instala cookies ni
+              guarda identificadores en tu dispositivo, y los datos se tratan de forma agregada.
+            </p>
+          </>
+        )
+      }
+
+      {
+        clarity && (
+          <>
+            <h2>Análisis (solo si aceptas)</h2>
+            <p>
+              Con tu permiso, Microsoft Clarity registra cómo se navega por la web (clics, desplazamiento) para
+              obtener mapas de calor y mejorarla. Instala, entre otras, las cookies <code>_clck</code> y{' '}
+              <code>_clsk</code>. Más detalle en la{' '}
+              <a href="https://privacy.microsoft.com/es-es/privacystatement" target="_blank" rel="noopener noreferrer">
+                declaración de privacidad de Microsoft
+              </a>
+              .
+            </p>
+            <p>
+              <button type="button" class="btn btn--ghost" data-consent-open>
+                Cambiar mis preferencias
+              </button>
+            </p>
+          </>
+        )
+      }
+
+      <h2>Servicios externos</h2>
+      <p>
+        Las reservas se hacen en Booksy y el mapa se sirve desde OpenStreetMap; al usarlos se aplican sus propias
+        políticas. También puedes borrar o bloquear cookies desde la configuración de tu navegador.
+      </p>
+
+      {email && <p>Dudas: <a href={`mailto:${email}`}>{email}</a></p>}
+
+      <p><a class="legal-back" href="/">← Volver a la web</a></p>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .legal {
+    min-height: 100svh;
+    padding-block: clamp(3rem, 8vw, 6rem);
+  }
+  .legal-wrap {
+    max-width: 46rem;
+  }
+  .legal-home {
+    display: inline-block;
+    margin-bottom: 2.5rem;
+  }
+  .legal-title {
+    margin-bottom: 1.5rem;
+    font-size: var(--fs-h2);
+    font-weight: 900;
+    font-stretch: var(--wd-poster);
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+  .legal h2 {
+    margin: 2.5rem 0 0.75rem;
+    font-size: var(--fs-h3);
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .legal p,
+  .legal li {
+    color: var(--c-bone);
+    line-height: 1.6;
+  }
+  .legal p + p {
+    margin-top: 0.9rem;
+  }
+  .legal ul {
+    display: grid;
+    gap: 0.6rem;
+    padding-left: 1.2rem;
+    list-style: disc;
+  }
+  .legal a:not(.btn, .legal-home) {
+    color: var(--c-white);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .legal code {
+    padding: 0.05em 0.35em;
+    border-radius: 4px;
+    background: var(--c-ink-3);
+    font-size: 0.9em;
+  }
+  .legal-back {
+    display: inline-block;
+    margin-top: 2rem;
+  }
+</style>

@@ -8,8 +8,6 @@
 import { getImage } from 'astro:assets';
 import Icon from '../ui/Icon.astro';
 import Pending from '../ui/Pending.astro';
-import LavaEdge from '../lava/LavaEdge.astro';
-import LavaCracks from '../lava/LavaCracks.astro';
 import { presentationVideo, openingVideo, hasVideo, type Video } from '@/data/media';
 
 interface Chapter {
@@ -68,7 +66,6 @@ const pendingChapters = chapters.filter((c) => !hasVideo(c.video));
               {c.video.webm && <source src={c.video.webm} type="video/webm" />}
               {c.video.mp4 && <source src={c.video.mp4} type="video/mp4" />}
             </video>
-            <LavaEdge class="frame-drip" seed={60 + i} base={6} amp={4} drips={4} maxLen={70} minWidth="0px" width={600} />
           </div>
           <div class="chapter-text">
             <p class="eyebrow">{c.eyebrow}</p>
@@ -100,7 +97,6 @@ const pendingChapters = chapters.filter((c) => !hasVideo(c.video));
       )
     }
   </div>
-  <LavaCracks seed={140} height={180} />
 </section>
 
 <script>
@@ -154,12 +150,6 @@ const pendingChapters = chapters.filter((c) => !hasVideo(c.video));
     height: 100%;
     object-fit: cover;
     background: #000;
-  }
-  .frame-drip {
-    position: absolute;
-    top: -1px;
-    right: 6%;
-    width: 30%;
   }
   .chapter-text {
     grid-column: 9 / span 4;

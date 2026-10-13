@@ -3,7 +3,6 @@ import Base from '@/layouts/Base.astro';
 import Nav, { type NavItem } from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import StickyBooking from '@/components/StickyBooking.astro';
-import Marquee from '@/components/Marquee.astro';
 import Hero from '@/components/sections/Hero.astro';
 import About from '@/components/sections/About.astro';
 import Chapters from '@/components/sections/Chapters.astro';
@@ -34,13 +33,12 @@ const hasContact = [site.phone, site.email, site.instagram, site.mapsUrl, site.a
 
 const address = valueOf(site.address);
 const place = address ? `${address.locality}, ${site.island}` : site.island;
-const marqueeWords = ['Corte caballero', 'Degradado', 'Barba a navaja', 'Mechas', 'Decoloración', address?.locality ?? site.island];
 
 const navItems: NavItem[] = [
   { href: '#sobre', label: 'Sobre nosotros' },
-  show.services && { href: '#servicios', label: 'Servicios' },
   show.gallery && { href: '#galeria', label: 'Galería' },
   show.chapters && { href: '#videos', label: 'Vídeos' },
+  show.services && { href: '#servicios', label: 'Servicios' },
   show.reviews && { href: '#resenas', label: 'Reseñas' },
   { href: '#visitanos', label: hasContact ? 'Contacto' : 'Ubicación' },
 ].filter((x): x is NavItem => Boolean(x));
@@ -50,11 +48,10 @@ const navItems: NavItem[] = [
   <Nav items={navItems} />
   <main id="contenido">
     <Hero />
-    <Marquee words={marqueeWords} />
     <About />
+    {show.gallery && <Gallery />}
     {show.chapters && <Chapters />}
     {show.services && <Services />}
-    {show.gallery && <Gallery />}
     {show.booking && <Booking />}
     {show.reviews && <Reviews />}
     <Visit />

@@ -3,8 +3,7 @@
 import { Image } from 'astro:assets';
 import MediaFrame from '../ui/MediaFrame.astro';
 import Icon from '../ui/Icon.astro';
-import LavaEdge from '../lava/LavaEdge.astro';
-import LavaSplatter from '../lava/LavaSplatter.astro';
+import LavaFlow from '../lava/LavaFlow.astro';
 import { aboutPhotos, aboutInline } from '@/data/media';
 
 const values = ['Estilo', 'Precisión', 'Actitud'];
@@ -12,19 +11,14 @@ const [inlineA, inlineB] = aboutInline;
 ---
 
 <section id="sobre" class="about surface-light" aria-labelledby="about-title" data-scene="about">
+  <LavaFlow class="about-lava" seed={7} count={12} maxLen={150} maxW={28} />
   <div class="wrap">
-    <p class="eyebrow" data-reveal="rise"><span class="idx">(01)</span> Sobre BLACKPORT</p>
+    <p class="eyebrow" data-reveal="rise">Sobre BLACKPORT</p>
 
     <h2 id="about-title" class="about-title" data-split="chars">
-      <span class="line-mask"><span>Disciplina, {inlineA?.src && <span class="pill" aria-hidden="true"><Image src={inlineA.src} alt="" widths={[240, 360]} sizes="12vw" style={`object-position:${inlineA.focus}`} /></span>}</span></span>
-      <span class="line-mask"><span><span class="outline">estilo</span> {inlineB?.src && <span class="pill pill--b" aria-hidden="true"><Image src={inlineB.src} alt="" widths={[240, 360]} sizes="12vw" style={`object-position:${inlineB.focus}`} /></span>} y </span></span>
-      <span class="line-mask about-last">
-        <span class="lava-text">actitud. </span>
-        <svg class="brush" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          <path d="M8 40 C 120 18, 230 46, 340 30 S 520 12, 592 26" />
-          <path class="brush-thin" d="M60 52 C 200 40, 380 56, 560 42" />
-        </svg>
-      </span>
+      <span class="line-mask"><span>Disciplina, {inlineA?.src && <span class="pill photo-mono" aria-hidden="true"><Image src={inlineA.src} alt="" widths={[240, 360]} sizes="12vw" style={`object-position:${inlineA.focus}`} /></span>}</span></span>
+      <span class="line-mask"><span><span class="outline">estilo</span> {inlineB?.src && <span class="pill pill--b photo-mono" aria-hidden="true"><Image src={inlineB.src} alt="" widths={[240, 360]} sizes="12vw" style={`object-position:${inlineB.focus}`} /></span>} y </span></span>
+      <span class="line-mask"><span class="lava-text">actitud. </span></span>
     </h2>
 
     <div class="about-grid">
@@ -35,9 +29,8 @@ const [inlineA, inlineB] = aboutInline;
         </p>
         <ol class="about-values" aria-label="Valores">
           {
-            values.map((v, i) => (
+            values.map((v) => (
               <li>
-                <span class="v-num">{String(i + 1).padStart(2, '0')}</span>
                 <span class="v-name">{v}</span>
               </li>
             ))
@@ -48,30 +41,16 @@ const [inlineA, inlineB] = aboutInline;
         </a>
       </div>
 
-      <figure class="about-portrait">
-        <div class="about-portrait-frame" data-portrait>
+      <figure class="about-portrait" data-tilt>
+        <div class="about-portrait-frame photo-mono" data-portrait>
           <MediaFrame photo={aboutPhotos.main} sizes="(min-width: 900px) 36vw, 84vw" widths={[480, 853]} />
         </div>
-        <LavaEdge
-          class="portrait-drip"
-          seed={52}
-          base={0}
-          amp={0}
-          width={200}
-          minWidth="0px"
-          fixed={[
-            { t: 0.18, len: 160, w: 14 },
-            { t: 0.42, len: 70, w: 9 },
-            { t: 0.62, len: 34, w: 7 },
-          ]}
-        />
       </figure>
 
       <figure class="about-detail" data-detail>
-        <div class="about-detail-frame">
+        <div class="about-detail-frame photo-mono">
           <MediaFrame photo={aboutPhotos.detail} sizes="(min-width: 900px) 22vw, 52vw" widths={[480, 853]} />
         </div>
-        <LavaSplatter class="detail-splat" seed={5} />
       </figure>
     </div>
   </div>
@@ -81,8 +60,15 @@ const [inlineA, inlineB] = aboutInline;
   .about {
     position: relative;
     z-index: 1;
-    padding-top: clamp(7rem, 13vw, 11rem);
+    /* Reserva el espacio de la lava que cae desde el hero (ver LavaFlow). */
+    padding-top: clamp(12rem, 22vw, 21rem);
     padding-bottom: clamp(5rem, 9vw, 9rem);
+  }
+  .about-lava {
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
   }
 
   /* Titular de cartel a todo el ancho con miniaturas entre palabras. */
@@ -120,33 +106,6 @@ const [inlineA, inlineB] = aboutInline;
     object-fit: cover;
     transition: transform 1.6s var(--ease-out) 0.3s;
   }
-  /* Pincelada roja bajo «actitud»: GSAP la dibuja con el scroll. */
-  /* Hueco extra bajo la línea para la pincelada, dentro de su propia máscara. */
-  .about-last {
-    position: relative;
-    padding-bottom: 0.32em;
-    margin-bottom: -0.32em;
-  }
-  .brush {
-    position: absolute;
-    left: 0;
-    bottom: 0.04em;
-    width: min(100%, 4.4em);
-    height: 0.22em;
-    overflow: visible;
-    pointer-events: none;
-  }
-  .brush path {
-    fill: none;
-    stroke: var(--c-lava);
-    stroke-width: 14;
-    stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
-  }
-  .brush .brush-thin {
-    stroke-width: 4;
-    opacity: 0.7;
-  }
 
   .about-grid {
     position: relative;
@@ -182,12 +141,6 @@ const [inlineA, inlineB] = aboutInline;
     padding-block: 0.85rem;
     border-bottom: 1px solid var(--c-line-light);
   }
-  .v-num {
-    font-size: 0.72rem;
-    font-weight: 650;
-    letter-spacing: 0.12em;
-    color: var(--c-lava-ink);
-  }
   .v-name {
     font-size: clamp(1.6rem, 1rem + 1.8vw, 2.6rem);
     font-weight: 820;
@@ -198,6 +151,7 @@ const [inlineA, inlineB] = aboutInline;
 
   .about-portrait {
     position: relative;
+    perspective: 900px;
     grid-column: 7 / span 5;
     grid-row: 1 / span 2;
   }
@@ -208,13 +162,6 @@ const [inlineA, inlineB] = aboutInline;
   }
   .about-portrait-frame :global(.media) {
     transform-origin: 50% 40%;
-  }
-  .portrait-drip {
-    position: absolute;
-    left: -6%;
-    bottom: 0;
-    width: 40%;
-    transform: translateY(calc(100% - 4px));
   }
 
   .about-detail {
@@ -230,12 +177,6 @@ const [inlineA, inlineB] = aboutInline;
     overflow: hidden;
     background: var(--c-ink-2);
     box-shadow: 0 30px 60px -28px rgb(0 0 0 / 0.55);
-  }
-  .detail-splat {
-    position: absolute;
-    left: -3rem;
-    bottom: -3rem;
-    width: 7rem;
   }
 
   @media (max-width: 899px) {

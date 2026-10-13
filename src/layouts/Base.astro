@@ -4,7 +4,7 @@ import { site, BOOKSY_URL } from '@/config/site';
 import { valueOf } from '@/lib/pending';
 import { toSchema } from '@/lib/hours';
 import { priceRange } from '@/data/services';
-import Intro from '@/components/Intro.astro';
+import Analytics from '@/components/Analytics.astro';
 
 interface Props {
   title: string;
@@ -66,7 +66,7 @@ const jsonLd = {
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#090909" />
+    <meta name="theme-color" content="#070707" />
     <meta name="color-scheme" content="dark light" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -87,15 +87,18 @@ const jsonLd = {
       (function () {
         var d = document.documentElement;
         d.classList.add('js');
-        // Intro solo en la primera visita de la sesión, sin enlace profundo ni reduced-motion.
+        // Apertura del hero: sin enlace profundo ni reduced-motion. En visitas repetidas
+        // de la misma sesión se reproduce más rápida (intro-repeat).
+        // Mientras dura, lo que entra en la coreografía empieza oculto (ver Hero.astro).
         try {
-          if (!location.hash && !sessionStorage.getItem('bp-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          if (!location.hash && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
             d.classList.add('intro-on');
+            if (sessionStorage.getItem('bp-intro')) d.classList.add('intro-repeat');
             sessionStorage.setItem('bp-intro', '1');
-            // Red de seguridad: si la coreografía no llega a ejecutarse, se retira igualmente.
+            // Red de seguridad: si el script de movimiento no llega a ejecutarse, todo aparece igualmente.
             setTimeout(function () {
-              d.classList.add('intro-go', 'intro-done');
-            }, 3500);
+              d.classList.add('intro-done');
+            }, 4000);
           }
         } catch (e) {}
       })();
@@ -103,11 +106,11 @@ const jsonLd = {
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
-    <Intro />
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
     <slot />
     <script>
       import '@/scripts/motion/index';
     </script>
+    <Analytics />
   </body>
 </html>

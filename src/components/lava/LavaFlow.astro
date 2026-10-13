@@ -1,0 +1,73 @@
+---
+/**
+ * Lava viva: borde fundido con gotas, colocado en el límite superior de una sección
+ * para que la lava «caiga» desde la escena anterior.
+ * El servidor dibuja la forma en reposo (funciona sin JS y con reduced-motion);
+ * scripts/motion/lavaflow.ts la recalcula al ancho real y la anima:
+ * respiración lenta, estiramiento con el scroll, inercia y reacción al puntero.
+ *
+ * Reglas de colocación: la sección que lo contiene debe reservar arriba al menos
+ * `base + amp + maxLen * 1.35` px de padding para que ninguna gota tape texto.
+ */
+import { makeDrips, flowPath, glossPath, type FlowSpec } from '@/lib/lavaflow';
+import { scopeAttrs } from '@/lib/scope';
+
+interface Props extends Partial<FlowSpec> {
+  seed: number;
+  class?: string;
+  /** Color de la banda en su raíz: el de la escena de la que «cae» la lava. */
+  from?: 'obsidian' | 'magma';
+}
+
+const { seed, count = 11, base = 26, amp = 8, minLen = 18, maxLen = 150, minW = 9, maxW = 26, from = 'obsidian', class: className } = Astro.props;
+const spec: FlowSpec = { seed, count, base, amp, minLen, maxLen, minW, maxW };
+const W = 1440;
+// Altura con margen para el estiramiento máximo (ver STRETCH en el runtime).
+const H = Math.ceil(base + amp + maxLen * 1.35 + maxW);
+const drips = makeDrips(spec);
+const lens = drips.map((d) => d.len);
+const id = `lf-${seed}`;
+const scope = scopeAttrs(Astro.props);
+const top = from === 'obsidian' ? '#070707' : '#3a0508';
+---
+
+<svg
+  class:list={['lavaflow', className]}
+  viewBox={`0 0 ${W} ${H}`}
+  preserveAspectRatio="none"
+  aria-hidden="true"
+  focusable="false"
+  data-lavaflow={JSON.stringify(spec)}
+  style={`--lf-h:${H}px`}
+  {...scope}
+>
+  <defs>
+    <linearGradient id={`${id}-fill`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={H}>
+      <stop offset="0" stop-color={top} />
+      <stop offset={(base * 0.35) / H} stop-color={top} />
+      <stop offset={(base * 0.9) / H} stop-color="#6e0c12" />
+      <stop offset={(base * 1.6) / H} stop-color="#cc2731" />
+      <stop offset="0.82" stop-color="#d8301f" />
+      <stop offset="1" stop-color="#ff5a1e" />
+    </linearGradient>
+  </defs>
+  <path class="lf-body" fill={`url(#${id}-fill)`} d={flowPath(spec, drips, W, lens)} data-lf-body></path>
+  <path class="lf-gloss" d={glossPath(spec, drips, W, lens)} data-lf-gloss></path>
+</svg>
+
+<style>
+  .lavaflow {
+    display: block;
+    width: 100%;
+    height: var(--lf-h);
+    overflow: visible;
+    pointer-events: none;
+  }
+  .lf-gloss {
+    fill: none;
+    stroke: #ffd2b8;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    opacity: 0.38;
+  }
+</style>

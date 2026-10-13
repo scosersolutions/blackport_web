@@ -1,7 +1,6 @@
 ---
 import Logo from './Logo.astro';
 import Icon from './ui/Icon.astro';
-import LavaEdge from './lava/LavaEdge.astro';
 import type { NavItem } from './Nav.astro';
 import { site, BOOKSY_URL } from '@/config/site';
 import { valueOf } from '@/lib/pending';
@@ -17,25 +16,10 @@ const email = valueOf(site.email);
 const address = valueOf(site.address);
 const mapsUrl = valueOf(site.mapsUrl);
 const year = new Date().getFullYear();
+const hasConsent = Boolean(import.meta.env.PUBLIC_CLARITY_ID?.trim());
 ---
 
 <footer class="footer surface-dark" data-scene="footer">
-  <LavaEdge
-    class="footer-drip"
-    seed={2024}
-    tone="lava"
-    base={5}
-    amp={2}
-    width={600}
-    minWidth="0px"
-    fixed={[
-      { t: 0.18, len: 34, w: 7 },
-      { t: 0.46, len: 120, w: 14 },
-      { t: 0.62, len: 58, w: 9 },
-      { t: 0.86, len: 22, w: 6 },
-    ]}
-  />
-
   <div class="footer-inner wrap">
     <div class="footer-brand">
       <Logo width={150} />
@@ -110,6 +94,8 @@ const year = new Date().getFullYear();
 
   <div class="footer-base wrap">
     <p>© {year} {site.name}. Todos los derechos reservados.</p>
+    <a href="/cookies">Cookies</a>
+    {hasConsent && <a href="/cookies" data-consent-open>Preferencias de cookies</a>}
     <a href="#inicio">Volver arriba ↑</a>
   </div>
 </footer>
@@ -120,12 +106,6 @@ const year = new Date().getFullYear();
     padding-top: clamp(4rem, 8vw, 6rem);
     border-top: 1px solid var(--c-line-dark);
     overflow: hidden;
-  }
-  .footer-drip {
-    position: absolute;
-    top: 0;
-    right: var(--gutter);
-    width: clamp(160px, 22vw, 300px);
   }
   .footer-inner {
     display: grid;
@@ -221,6 +201,9 @@ const year = new Date().getFullYear();
   }
   .footer-base a:hover {
     color: var(--c-white);
+  }
+  .footer-base p {
+    flex: 1 1 auto;
   }
 
   @media (max-width: 799px) {

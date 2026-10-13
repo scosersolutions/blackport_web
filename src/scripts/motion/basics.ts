@@ -1,11 +1,6 @@
 /**
- * Motion sin dependencias. Todo lo que se mueve con el scroll usa transform/opacity
- * y solo se calcula para los elementos visibles (IntersectionObserver + rAF).
- *
- * - [data-reveal], [data-lava]: revelado al entrar en pantalla (CSS hace el resto).
- * - [data-parallax="0.08"]: desplazamiento vertical proporcional (escritorio).
- * - [data-progress]: expone --p (0→1) mientras el elemento cruza el viewport;
- *   con data-progress="exit", 0 cuando su borde superior está arriba y 1 al salir.
+ * Comportamientos base, independientes de GSAP (funcionan también con reduced-motion):
+ * - [data-reveal], [data-lava]: revelado CSS al entrar en pantalla.
  * - [data-magnetic]: el elemento sigue ligeramente al puntero (solo puntero fino).
  * - [data-status]: estado abierto/cerrado según el horario, en hora de Canarias.
  * - [data-count]: cuenta desde 0 hasta su valor al entrar en pantalla.
@@ -16,9 +11,8 @@ import { nowIn, openStatus } from '@/lib/hours';
 
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-const wide = window.matchMedia('(min-width: 900px)');
 
-function setupReveal(): void {
+export function setupReveal(): void {
   const targets = document.querySelectorAll('[data-reveal], [data-lava]');
   if (reduce.matches || !('IntersectionObserver' in window)) {
     targets.forEach((el) => el.classList.add('is-in'));
@@ -37,66 +31,8 @@ function setupReveal(): void {
   targets.forEach((el) => io.observe(el));
 }
 
-/** Parallax y progreso comparten un único bucle de scroll. */
-function setupScrollLinked(): void {
-  const parallax = Array.from(document.querySelectorAll<HTMLElement>('[data-parallax]'));
-  const progress = Array.from(document.querySelectorAll<HTMLElement>('[data-progress]'));
-  if (!parallax.length && !progress.length) return;
-
-  // Solo se calculan los elementos cerca del viewport.
-  const active = new Set<HTMLElement>();
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        const el = e.target as HTMLElement;
-        if (e.isIntersecting) active.add(el);
-        else active.delete(el);
-      }
-      schedule();
-    },
-    { rootMargin: '25% 0px 25% 0px' },
-  );
-  [...parallax, ...progress].forEach((el) => io.observe(el));
-
-  let queued = false;
-  const update = (): void => {
-    queued = false;
-    const vh = window.innerHeight;
-    const still = reduce.matches;
-    for (const el of active) {
-      const rect = el.getBoundingClientRect();
-      if (el.dataset.progress !== undefined) {
-        const p =
-          el.dataset.progress === 'exit'
-            ? -rect.top / Math.max(rect.height, 1)
-            : (vh - rect.top) / (vh + rect.height);
-        if (still) el.style.removeProperty('--p');
-        else el.style.setProperty('--p', Math.min(1, Math.max(0, p)).toFixed(4));
-      }
-      if (el.dataset.parallax !== undefined) {
-        if (still || !wide.matches) {
-          el.style.transform = '';
-          continue;
-        }
-        const speed = Number(el.dataset.parallax) || 0.08;
-        const offset = (rect.top + rect.height / 2 - vh / 2) * -speed;
-        el.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;
-      }
-    }
-  };
-  const schedule = (): void => {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(update);
-  };
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule, { passive: true });
-  reduce.addEventListener('change', schedule);
-}
-
-function setupMagnetic(): void {
-  const items = document.querySelectorAll<HTMLElement>('[data-magnetic]');
-  items.forEach((el) => {
+export function setupMagnetic(): void {
+  document.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => {
     const strength = Number(el.dataset.magnetic) || 0.25;
     el.addEventListener('pointermove', (e) => {
       if (!finePointer.matches || reduce.matches) return;
@@ -111,12 +47,13 @@ function setupMagnetic(): void {
   });
 }
 
-function setupStatus(): void {
+export function setupStatus(): void {
   const hours = valueOf(site.hours);
   const nodes = document.querySelectorAll<HTMLElement>('[data-status]');
   if (!hours || !nodes.length) return;
   const render = (): void => {
-    const status = openStatus(hours, nowIn(site.timeZone));
+    const now = nowIn(site.timeZone);
+    const status = openStatus(hours, now);
     nodes.forEach((n) => {
       n.classList.toggle('is-open', status.open);
       const label = n.querySelector('[data-status-label]');
@@ -124,16 +61,15 @@ function setupStatus(): void {
       n.hidden = false;
     });
     // Marca la fila del día actual en las tablas de horario.
-    const today = String(nowIn(site.timeZone).day);
     document.querySelectorAll<HTMLElement>('[data-day]').forEach((row) => {
-      row.classList.toggle('is-today', row.dataset.day === today);
+      row.classList.toggle('is-today', row.dataset.day === String(now.day));
     });
   };
   render();
   window.setInterval(render, 60_000);
 }
 
-function setupCount(): void {
+export function setupCount(): void {
   const items = document.querySelectorAll<HTMLElement>('[data-count]');
   if (!items.length || reduce.matches) return;
   const formatter = (el: HTMLElement): Intl.NumberFormat => {
@@ -149,8 +85,7 @@ function setupCount(): void {
     const dur = 1600;
     const tick = (t: number): void => {
       const k = Math.min(1, (t - start) / dur);
-      const eased = 1 - Math.pow(1 - k, 4);
-      el.textContent = fmt.format(target * eased);
+      el.textContent = fmt.format(target * (1 - Math.pow(1 - k, 4)));
       if (k < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -167,9 +102,3 @@ function setupCount(): void {
   );
   items.forEach((el) => io.observe(el));
 }
-
-setupReveal();
-setupScrollLinked();
-setupMagnetic();
-setupStatus();
-setupCount();

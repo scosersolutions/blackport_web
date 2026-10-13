@@ -21,6 +21,7 @@ const address = valueOf(site.address);
 ---
 
 <header class="nav" data-nav>
+  <span class="nav-progress" aria-hidden="true" data-nav-progress></span>
   <div class="nav-inner wrap">
     <a href="#inicio" class="nav-logo" aria-label="BLACKPORT, ir al inicio">
       <Logo width={118} priority />
@@ -178,6 +179,19 @@ const address = valueOf(site.address);
   }
   .nav.is-hidden {
     transform: translateY(-100%);
+  }
+  /* Progreso de lectura: hilo rojo bajo la barra (lo escala GSAP). */
+  .nav-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    height: 2px;
+    background: var(--c-lava);
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
   }
   .nav::before {
     /* Degradado de legibilidad sobre el hero, antes de solidificarse. */

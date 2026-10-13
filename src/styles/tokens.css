@@ -49,6 +49,7 @@
   --intro-delay: 0s;
 }
 
+/* Con intro, la entrada del hero espera a que la cuchilla abra la pantalla (.intro-go). */
 html.intro-on {
-  --intro-delay: 1.3s;
+  --intro-delay: 0.05s;
 }

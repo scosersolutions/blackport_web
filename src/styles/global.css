@@ -488,6 +488,10 @@ button {
 .js [data-enter='lines'] {
   animation: none;
 }
+html.intro-on:not(.intro-go) [data-enter],
+html.intro-on:not(.intro-go) [data-enter] .line-mask > span {
+  animation-play-state: paused;
+}
 .js [data-enter='lines'] .line-mask > span {
   animation: enter-line 1.15s var(--ease-out) both;
   animation-delay: calc(var(--intro-delay) + 0.12s + var(--l, 0) * 0.1s);

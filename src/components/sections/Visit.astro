@@ -39,11 +39,11 @@ const relief = contours(1706, 600, 12);
 const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng).toFixed(4)}° O`;
 ---
 
-<section id="visitanos" class="visit section surface-dark" aria-labelledby="visit-title">
+<section id="visitanos" class="visit section surface-dark" aria-labelledby="visit-title" data-scene="visit">
   <div class="visit-grid wrap">
     <header class="visit-head">
       <p class="eyebrow" data-reveal="rise"><span class="idx">(06)</span> Visítanos</p>
-      <h2 id="visit-title" class="h2" data-reveal="lines">
+      <h2 id="visit-title" class="h2" data-split="chars">
         <span class="line-mask"><span>Ven a </span></span>
         <span class="line-mask"><span><span class="outline">vernos.</span> </span></span>
       </h2>
@@ -135,6 +135,7 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
           <svg viewBox="0 0 600 600" aria-hidden="true" focusable="false">
             {relief.map((d, i) => (
               <path
+                class="contour"
                 d={d}
                 fill="none"
                 stroke={i === relief.length - 4 ? 'var(--c-lava)' : 'rgb(255 255 255 / .16)'}
@@ -142,7 +143,7 @@ const coords = geo && `${Math.abs(geo.lat).toFixed(4)}° N · ${Math.abs(geo.lng
               />
             ))}
           </svg>
-          <span class="pin" aria-hidden="true">
+          <span class="pin" aria-hidden="true" data-pin>
             <Icon name="pin" />
           </span>
           <span class="relief-label">

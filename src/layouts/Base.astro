@@ -92,6 +92,10 @@ const jsonLd = {
           if (!location.hash && !sessionStorage.getItem('bp-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
             d.classList.add('intro-on');
             sessionStorage.setItem('bp-intro', '1');
+            // Red de seguridad: si la coreografía no llega a ejecutarse, se retira igualmente.
+            setTimeout(function () {
+              d.classList.add('intro-go', 'intro-done');
+            }, 3500);
           }
         } catch (e) {}
       })();
@@ -103,7 +107,7 @@ const jsonLd = {
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
     <slot />
     <script>
-      import '@/scripts/motion';
+      import '@/scripts/motion/index';
     </script>
   </body>
 </html>

@@ -1,115 +1,61 @@
 ---
 /**
- * Cortina de entrada (primera visita de la sesión, sin reduced-motion).
- * La activa el script en línea de Base.astro con `html.intro-on`; sin JS no existe.
- * Es puramente decorativa: no bloquea clics ni el scroll y se retira sola en ~2 s.
+ * Entrada «corte»: el logo aparece, una cuchilla roja cruza la pantalla en diagonal
+ * y las dos mitades se separan descubriendo el hero.
+ * Solo en la primera visita de la sesión y sin reduced-motion (`html.intro-on`, en Base.astro).
+ * La coreografía es GSAP (scripts/motion/intro.ts). Si el JS no llega, el script en línea
+ * de Base la retira a los 3,5 s. Cualquier tecla, clic, rueda o toque la salta.
  */
 import Logo from './Logo.astro';
-import LavaEdge from './lava/LavaEdge.astro';
 ---
 
-<div class="intro" aria-hidden="true">
-  <div class="intro-lava">
-    <LavaEdge
-      class="intro-drips"
-      seed={404}
-      base={0}
-      amp={0}
-      width={1200}
-      animate={false}
-      fixed={[
-        { t: 0.08, len: 120, w: 26 },
-        { t: 0.21, len: 260, w: 34 },
-        { t: 0.37, len: 90, w: 20 },
-        { t: 0.52, len: 330, w: 40 },
-        { t: 0.66, len: 150, w: 24 },
-        { t: 0.8, len: 230, w: 30 },
-        { t: 0.93, len: 70, w: 18 },
-      ]}
-    />
+<div class="intro" aria-hidden="true" data-intro>
+  <div class="intro-half intro-top" data-intro-top>
+    <div class="intro-logo"><Logo width={240} priority /></div>
   </div>
-  <div class="intro-ink">
-    <div class="intro-logo">
-      <Logo width={220} priority />
-    </div>
-    <span class="intro-bar"></span>
+  <div class="intro-half intro-bot" data-intro-bot>
+    <div class="intro-logo"><Logo width={240} /></div>
   </div>
+  <span class="intro-blade" data-intro-blade></span>
 </div>
 
 <style>
   .intro {
     display: none;
   }
-  :global(html.intro-on) .intro {
+  :global(html.intro-on:not(.intro-done)) .intro {
     display: block;
     position: fixed;
     inset: 0;
     z-index: 200;
     pointer-events: none;
-    animation: intro-done 0.01s linear 2.3s forwards;
+    overflow: hidden;
   }
-  .intro-ink,
-  .intro-lava {
+  /* Diagonal del corte: de (0, 60 %) a (100 %, 40 %). */
+  .intro-half {
     position: absolute;
-    inset: 0;
-    will-change: transform;
-  }
-  .intro-ink {
+    inset: -2px;
     display: grid;
     place-items: center;
     background: var(--c-ink);
-    animation: intro-lift 1s var(--ease-liquid) 0.8s forwards;
+    will-change: transform;
   }
-  .intro-lava {
-    background: var(--c-lava);
-    animation: intro-lift-far 1.15s var(--ease-liquid) 0.95s forwards;
+  .intro-top {
+    clip-path: polygon(0 0, 100% 0, 100% 40%, 0 60%);
   }
-  .intro-drips {
-    position: absolute;
-    top: calc(100% - 2px);
-    left: 0;
-    right: 0;
+  .intro-bot {
+    clip-path: polygon(0 60%, 100% 40%, 100% 100%, 0 100%);
   }
-  .intro-logo {
-    animation: intro-logo 0.8s var(--ease-out) both;
-  }
-  .intro-bar {
+  /* Centrada en la diagonal; el ángulo exacto lo calcula el script según el viewport. */
+  .intro-blade {
     position: absolute;
     left: 50%;
-    top: calc(50% + 4.5rem);
-    width: 120px;
-    height: 2px;
-    margin-left: -60px;
-    background: var(--c-lava);
-    transform-origin: left;
-    animation: intro-bar 0.7s var(--ease-out) 0.1s both;
-  }
-  @keyframes intro-logo {
-    from {
-      opacity: 0;
-      transform: scale(0.92);
-      filter: blur(6px);
-    }
-  }
-  @keyframes intro-bar {
-    from {
-      transform: scaleX(0);
-    }
-  }
-  @keyframes intro-lift {
-    to {
-      transform: translate3d(0, -100%, 0);
-    }
-  }
-  /* La capa roja sube más para que sus goteos también salgan de pantalla. */
-  @keyframes intro-lift-far {
-    to {
-      transform: translate3d(0, calc(-100% - 70vh), 0);
-    }
-  }
-  @keyframes intro-done {
-    to {
-      visibility: hidden;
-    }
+    top: 50%;
+    width: 160vmax;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--c-lava-bright) 20%, var(--c-lava) 80%, transparent);
+    box-shadow: 0 0 24px 2px rgb(240 68 76 / 0.55);
+    transform: translate(-50%, -50%) rotate(var(--blade-angle, -11deg));
+    clip-path: inset(0 100% 0 0);
   }
 </style>

@@ -27,7 +27,7 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     <header class="g-head wrap">
       <div>
         <p class="eyebrow" data-reveal="rise"><span class="idx">(03)</span> Galería</p>
-        <h2 id="gallery-title" class="h2" data-reveal="lines">
+        <h2 id="gallery-title" class="h2" data-split="chars">
           <span class="line-mask"><span>Cortes, estilo, </span></span>
           <span class="line-mask"><span class="lava-text">personalidad. </span></span>
         </h2>
@@ -53,6 +53,7 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
       </div>
     </header>
 
+    <p class="g-bgword" aria-hidden="true" data-g-bgword>Trabajo real</p>
     <div class="g-viewport" data-g-viewport>
       <ul class="g-track" data-g-track>
         {
@@ -112,6 +113,8 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     </div>
   </div>
 
+  <span class="g-cursor" aria-hidden="true" data-g-cursor>Ver</span>
+
   {
     viewable.length > 0 && (
       <dialog class="lightbox" aria-label="Galería ampliada" data-lightbox>
@@ -145,100 +148,7 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
 </section>
 
 <script>
-  /* ── Recorrido horizontal ──
-     Escritorio con movimiento: la sección se fija y el scroll vertical desplaza la pista.
-     Móvil o reduced-motion: carrusel nativo con scroll horizontal y snap. */
-  const section = document.querySelector<HTMLElement>('[data-hscroll]');
-  const viewport = section?.querySelector<HTMLElement>('[data-g-viewport]');
-  const track = section?.querySelector<HTMLElement>('[data-g-track]');
-  if (section && viewport && track) {
-    const items = Array.from(track.querySelectorAll<HTMLElement>('[data-g-item]'));
-    const current = section.querySelector<HTMLElement>('[data-g-current]');
-    const bar = section.querySelector<HTMLElement>('[data-g-bar]');
-    const pinQuery = window.matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)');
-    let pinned = false;
-    let maxX = 0;
-    let queued = false;
-
-    const setProgress = (p: number): void => {
-      if (bar) bar.style.transform = `scaleX(${Math.max(0.04, p).toFixed(4)})`;
-      const idx = Math.min(items.length - 1, Math.round(p * (items.length - 1)));
-      if (current) current.textContent = String(idx + 1).padStart(2, '0');
-    };
-
-    const measure = (): void => {
-      pinned = pinQuery.matches;
-      section.classList.toggle('is-pinned', pinned);
-      if (!pinned) {
-        section.style.height = '';
-        track.style.transform = '';
-        return;
-      }
-      maxX = Math.max(0, track.scrollWidth - viewport.clientWidth);
-      // Altura = la propia pantalla fijada + el recorrido horizontal.
-      section.style.height = `${window.innerHeight + maxX}px`;
-      update();
-    };
-
-    const update = (): void => {
-      queued = false;
-      if (!pinned) return;
-      const rect = section.getBoundingClientRect();
-      const range = rect.height - window.innerHeight;
-      const p = range > 0 ? Math.min(1, Math.max(0, -rect.top / range)) : 0;
-      track.style.transform = `translate3d(${(-p * maxX).toFixed(1)}px, 0, 0)`;
-      setProgress(p);
-    };
-    const schedule = (): void => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(update);
-    };
-
-    // Carrusel nativo: el progreso sale de su propio scroll.
-    viewport.addEventListener(
-      'scroll',
-      () => {
-        if (pinned) return;
-        const range = viewport.scrollWidth - viewport.clientWidth;
-        setProgress(range > 0 ? viewport.scrollLeft / range : 0);
-      },
-      { passive: true },
-    );
-
-    // Flechas: una foto adelante o atrás en ambos modos.
-    const step = (dir: 1 | -1): void => {
-      const width = items[0]?.offsetWidth ?? 300;
-      if (!pinned) {
-        viewport.scrollBy({ left: dir * width, behavior: 'smooth' });
-        return;
-      }
-      const range = section.offsetHeight - window.innerHeight;
-      const delta = maxX > 0 ? (width / maxX) * range : 0;
-      window.scrollBy({ top: dir * delta, behavior: 'smooth' });
-    };
-    section.querySelector('[data-g-prev]')?.addEventListener('click', () => step(-1));
-    section.querySelector('[data-g-next]')?.addEventListener('click', () => step(1));
-
-    // Teclado en modo fijado: llevar a la vista la foto que recibe el foco.
-    track.addEventListener('focusin', (e) => {
-      if (!pinned) return;
-      const item = (e.target as HTMLElement).closest<HTMLElement>('[data-g-item], .g-end');
-      if (!item || maxX <= 0) return;
-      const target = Math.min(maxX, Math.max(0, item.offsetLeft - (viewport.clientWidth - item.offsetWidth) / 2));
-      const range = section.offsetHeight - window.innerHeight;
-      const top = section.getBoundingClientRect().top + window.scrollY + (target / maxX) * range;
-      window.scrollTo({ top, behavior: 'auto' });
-    });
-
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', measure, { passive: true });
-    pinQuery.addEventListener('change', measure);
-    // Las imágenes lazy no cambian el ancho (tamaños fijados por CSS), pero las fuentes sí pueden.
-    void document.fonts?.ready.then(measure);
-    measure();
-  }
-
+  /* Recorrido horizontal, cursor y parallax: scripts/motion/gallery.ts. */
   /* ── Lightbox ── */
   interface Slide {
     src: string;
@@ -296,12 +206,12 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     position: relative;
   }
   .g-pin {
+    position: relative;
     padding-block: var(--section-y);
   }
+  /* Fijado por ScrollTrigger (scripts/motion/gallery.ts). */
   .gallery.is-pinned .g-pin {
-    position: sticky;
-    top: 0;
-    height: 100svh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -387,6 +297,55 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
   }
 
   /* ── Pista ── */
+  .g-bgword {
+    position: absolute;
+    left: 0;
+    bottom: 4svh;
+    z-index: 0;
+    margin: 0;
+    font-size: clamp(6rem, 22vw, 24rem);
+    font-weight: 900;
+    font-stretch: 62%;
+    line-height: 0.8;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(9 9 9 / 0.1);
+    pointer-events: none;
+    user-select: none;
+  }
+  .gallery:not(.is-pinned) .g-bgword {
+    display: none;
+  }
+  .g-pin > :not(.g-bgword) {
+    position: relative;
+    z-index: 1;
+  }
+  /* Cursor contextual: acompaña al puntero sobre las fotos (no sustituye al del sistema). */
+  .g-cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    margin: -42px 0 0 -42px;
+    border-radius: 50%;
+    background: var(--c-lava);
+    color: var(--c-white);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.3);
+    transition:
+      opacity 0.3s,
+      scale 0.45s var(--ease-out);
+  }
   .g-viewport {
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -446,6 +405,15 @@ const VARIANTS = ['tall', 'low', 'mid', 'high', 'tall', 'low', 'mid', 'high', 't
     height: 100%;
     overflow: hidden;
     cursor: zoom-in;
+  }
+  /* Margen lateral para el parallax interno de la foto durante el recorrido. */
+  .g-btn :global(picture) {
+    display: block;
+    height: 100%;
+  }
+  .gallery.is-pinned .g-btn :global(picture) {
+    width: 124%;
+    margin-left: -12%;
   }
   .g-btn :global(.media) {
     transition:

@@ -19,7 +19,7 @@ const mapsUrl = valueOf(site.mapsUrl);
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer surface-dark" data-progress>
+<footer class="footer surface-dark" data-scene="footer">
   <LavaEdge
     class="footer-drip"
     seed={2024}
@@ -104,7 +104,7 @@ const year = new Date().getFullYear();
     </ul>
   </div>
 
-  <p class="footer-word" aria-hidden="true">
+  <p class="footer-word" aria-hidden="true" data-footer-word>
     <span>Black</span><span class="lava-text">port</span>
   </p>
 
@@ -116,8 +116,6 @@ const year = new Date().getFullYear();
 
 <style>
   .footer {
-    /* Sin JS o con reduced-motion no hay --p: el rótulo queda asentado. */
-    --p: 1;
     position: relative;
     padding-top: clamp(4rem, 8vw, 6rem);
     border-top: 1px solid var(--c-line-dark);
@@ -200,8 +198,7 @@ const year = new Date().getFullYear();
     text-transform: uppercase;
     white-space: nowrap;
     user-select: none;
-    /* --p llega a ~0,45 con el pie entero en pantalla: ahí queda asentado. */
-    transform: translate3d(0, calc(max(0, 0.45 - var(--p)) * 70%), 0);
+    overflow: hidden;
   }
 
   .footer-base {

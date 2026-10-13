@@ -11,11 +11,11 @@ const groups = CATEGORY_ORDER.map((cat) => ({ cat, items: services.filter((s) =>
 const total = String(groups.length).padStart(2, '0');
 ---
 
-<section id="servicios" class="services section surface-dark-2 grain" aria-labelledby="services-title">
+<section id="servicios" class="services section surface-dark-2 grain" aria-labelledby="services-title" data-scene="services">
   <div class="wrap">
     <header class="services-head">
       <p class="eyebrow" data-reveal="rise"><span class="idx">(02)</span> Servicios</p>
-      <h2 id="services-title" class="h2 services-title" data-reveal="lines">
+      <h2 id="services-title" class="h2 services-title" data-split="words">
         <span class="line-mask"><span>Tu estilo, </span></span>
         <span class="line-mask"><span><span class="outline">nuestro</span> trabajo. </span></span>
       </h2>
@@ -61,16 +61,16 @@ const total = String(groups.length).padStart(2, '0');
               <div class="svc-banner" aria-hidden="true">
                 <MediaFrame photo={servicePhotos[g.cat]} sizes="(max-width: 899px) 92vw, 1px" widths={[480, 853]} />
               </div>
-              <h3 id={`svc-${g.cat}`} class="svc-group-title" data-reveal="rise">
+              <h3 id={`svc-${g.cat}`} class="svc-group-title" data-svc-head>
                 <span class="svc-group-num">{String(gi + 1).padStart(2, '0')}</span>
                 {CATEGORY_TITLE[g.cat]}
               </h3>
               <ul class="svc-list">
-                {g.items.map((s, i) => {
+                {g.items.map((s) => {
                   const price = formatPrice(s);
                   const duration = formatDuration(s);
                   return (
-                    <li class="svc" data-reveal="rise" style={`--delay:${(i * 0.06).toFixed(2)}s`}>
+                    <li class="svc" data-svc-row data-svc-cat={g.cat}>
                       <span class="svc-name">
                         {s.name}
                         {s.popular && <span class="svc-tag">Top</span>}
@@ -126,6 +126,13 @@ const total = String(groups.length).padStart(2, '0');
       { rootMargin: '-45% 0px -45% 0px' },
     );
     groups.forEach((g) => io.observe(g));
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+    document.querySelectorAll<HTMLElement>('[data-svc-row]').forEach((row) => {
+      row.addEventListener('pointerenter', () => {
+        const group = row.closest<HTMLElement>('[data-svc-group]');
+        if (fine.matches && group) activate(group);
+      });
+    });
   }
 </script>
 
@@ -171,15 +178,23 @@ const total = String(groups.length).padStart(2, '0');
   .sv-img {
     position: absolute;
     inset: 0;
-    opacity: 0;
-    transform: scale(1.08);
-    transition:
-      opacity 0.8s var(--ease-out),
-      transform 1.4s var(--ease-out);
+    z-index: 0;
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 0.9s var(--ease-liquid);
+  }
+  .sv-img :global(.media) {
+    transform: scale(1.15);
+    transition: transform 1.6s var(--ease-out);
   }
   .sv-img.is-on {
-    opacity: 1;
+    z-index: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  .sv-img.is-on :global(.media) {
     transform: none;
+  }
+  .sv-label {
+    z-index: 2;
   }
   .sv-label {
     position: absolute;

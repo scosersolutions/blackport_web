@@ -11,26 +11,32 @@ const values = ['Estilo', 'Precisión', 'Actitud'];
 const [inlineA, inlineB] = aboutInline;
 ---
 
-<section id="sobre" class="about surface-light" aria-labelledby="about-title">
+<section id="sobre" class="about surface-light" aria-labelledby="about-title" data-scene="about">
   <div class="wrap">
     <p class="eyebrow" data-reveal="rise"><span class="idx">(01)</span> Sobre BLACKPORT</p>
 
-    <h2 id="about-title" class="about-title" data-reveal="lines">
+    <h2 id="about-title" class="about-title" data-split="chars">
       <span class="line-mask"><span>Disciplina, {inlineA?.src && <span class="pill" aria-hidden="true"><Image src={inlineA.src} alt="" widths={[240, 360]} sizes="12vw" style={`object-position:${inlineA.focus}`} /></span>}</span></span>
       <span class="line-mask"><span><span class="outline">estilo</span> {inlineB?.src && <span class="pill pill--b" aria-hidden="true"><Image src={inlineB.src} alt="" widths={[240, 360]} sizes="12vw" style={`object-position:${inlineB.focus}`} /></span>} y </span></span>
-      <span class="line-mask"><span class="lava-text">actitud. </span></span>
+      <span class="line-mask about-last">
+        <span class="lava-text">actitud. </span>
+        <svg class="brush" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path d="M8 40 C 120 18, 230 46, 340 30 S 520 12, 592 26" />
+          <path class="brush-thin" d="M60 52 C 200 40, 380 56, 560 42" />
+        </svg>
+      </span>
     </h2>
 
     <div class="about-grid">
       <div class="about-text">
-        <p class="about-body" data-reveal="rise">
+        <p class="about-body" data-split="fill">
           En BLACKPORT cada corte tiene un propósito. Escuchamos lo que buscas, trabajamos con precisión y cuidamos
           cada detalle —del degradado al color— para que salgas con tu mejor versión.
         </p>
         <ol class="about-values" aria-label="Valores">
           {
             values.map((v, i) => (
-              <li data-reveal="mask-x" style={`--delay:${(0.1 + i * 0.12).toFixed(2)}s`}>
+              <li>
                 <span class="v-num">{String(i + 1).padStart(2, '0')}</span>
                 <span class="v-name">{v}</span>
               </li>
@@ -43,7 +49,7 @@ const [inlineA, inlineB] = aboutInline;
       </div>
 
       <figure class="about-portrait">
-        <div class="about-portrait-frame" data-reveal="frame">
+        <div class="about-portrait-frame" data-portrait>
           <MediaFrame photo={aboutPhotos.main} sizes="(min-width: 900px) 36vw, 84vw" widths={[480, 853]} />
         </div>
         <LavaEdge
@@ -61,8 +67,8 @@ const [inlineA, inlineB] = aboutInline;
         />
       </figure>
 
-      <figure class="about-detail" data-parallax="0.12">
-        <div class="about-detail-frame" data-reveal="mask-x" style="--delay:.2s">
+      <figure class="about-detail" data-detail>
+        <div class="about-detail-frame">
           <MediaFrame photo={aboutPhotos.detail} sizes="(min-width: 900px) 22vw, 52vw" widths={[480, 853]} />
         </div>
         <LavaSplatter class="detail-splat" seed={5} />
@@ -114,8 +120,32 @@ const [inlineA, inlineB] = aboutInline;
     object-fit: cover;
     transition: transform 1.6s var(--ease-out) 0.3s;
   }
-  :global(.js) .about-title:not(.is-in) .pill :global(img) {
-    transform: scale(1.5);
+  /* Pincelada roja bajo «actitud»: GSAP la dibuja con el scroll. */
+  /* Hueco extra bajo la línea para la pincelada, dentro de su propia máscara. */
+  .about-last {
+    position: relative;
+    padding-bottom: 0.32em;
+    margin-bottom: -0.32em;
+  }
+  .brush {
+    position: absolute;
+    left: 0;
+    bottom: 0.04em;
+    width: min(100%, 4.4em);
+    height: 0.22em;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .brush path {
+    fill: none;
+    stroke: var(--c-lava);
+    stroke-width: 14;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .brush .brush-thin {
+    stroke-width: 4;
+    opacity: 0.7;
   }
 
   .about-grid {
@@ -136,8 +166,10 @@ const [inlineA, inlineB] = aboutInline;
   }
   .about-body {
     max-width: 40ch;
-    color: var(--c-ash-ink);
-    font-size: var(--fs-lead);
+    color: var(--c-ink);
+    font-size: clamp(1.15rem, 1rem + 0.7vw, 1.6rem);
+    font-weight: 500;
+    line-height: 1.4;
   }
   .about-values {
     width: 100%;
@@ -173,6 +205,9 @@ const [inlineA, inlineB] = aboutInline;
     aspect-ratio: 4 / 5;
     overflow: hidden;
     background: var(--c-ink-2);
+  }
+  .about-portrait-frame :global(.media) {
+    transform-origin: 50% 40%;
   }
   .portrait-drip {
     position: absolute;

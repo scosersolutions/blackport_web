@@ -1,6 +1,6 @@
 # blackport_web
 
-Web de BLACKPORT, barbería en Tenerife. Astro 7 + TypeScript, salida estática, sin librerías de animación.
+Web de BLACKPORT, barbería en Icod de los Vinos (Tenerife). Astro 7 + TypeScript, salida estática. Movimiento con GSAP (ScrollTrigger, SplitText, DrawSVG) en `src/scripts/motion/`; con `prefers-reduced-motion` solo hay fundidos.
 
 ## Comandos
 

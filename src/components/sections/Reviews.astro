@@ -74,71 +74,73 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
 
       {
         reviews.length > 0 ? (
-          <div class="wall" data-wall>
-            <div class="wall-bar">
-              <span class="wall-badge" aria-hidden="true">B</span>
-              <p class="wall-title">
-                Reseñas verificadas
-                <span>{reviews.length} de {rating?.count ?? reviews.length} · Booksy</span>
-              </p>
-              <span class="wall-stars" aria-hidden="true">
-                {Array.from({ length: 5 }, () => <Icon name="star" filled />)}
-              </span>
-            </div>
-            <div
-              class="wall-scroll"
-              tabindex="0"
-              role="region"
-              aria-label={`Reseñas de clientes (${reviews.length}). Desplázate para leer más.`}
-              data-wall-scroll
-            >
-              <ul class="msgs">
-                {reviews.map((r, i) => (
-                  <li class:list={['msg', i % 2 && 'msg--alt']} data-msg>
-                    <span class={`msg-avatar tone-${tone(r.author)}`} aria-hidden="true">
-                      {initials(r.author)}
-                    </span>
-                    <article class="msg-bubble" aria-label={`Reseña de ${r.author}`}>
-                      <header class="msg-head">
-                        <span class="msg-author">{r.author}</span>
-                        <span class="msg-verified">
-                          <Icon name="check" /> Cliente verificado
-                        </span>
-                      </header>
-                      {r.rating && (
-                        <p class="msg-stars" role="img" aria-label={`${r.rating} de 5 estrellas`}>
-                          {Array.from({ length: 5 }, (_, k) => (
-                            <span class:list={['msg-star', k >= (r.rating ?? 0) && 'is-off']}>
-                              <Icon name="star" filled />
-                            </span>
-                          ))}
-                        </p>
-                      )}
-                      <blockquote class="msg-text" lang={r.lang}>
-                        <p>{r.text}</p>
-                      </blockquote>
-                      <footer class="msg-foot">
-                        {r.service && <span class="msg-service">{r.service}</span>}
-                        {r.date && <time datetime={r.date}>{dayFmt.format(new Date(r.date))}</time>}
-                        <span class="sr-only">, en {SOURCE_LABEL[r.source]}</span>
-                      </footer>
-                    </article>
-                  </li>
-                ))}
-              </ul>
-              {sources[0].url && (
-                <p class="msgs-end">
-                  ¿Quieres leer más?{' '}
-                  <a href={sources[0].url} target="_blank" rel="noopener noreferrer">
-                    {sources[0].label} en Booksy<span class="sr-only"> (pestaña nueva)</span>
-                  </a>
+          <>
+            <div class="wall" data-wall>
+              <div class="wall-bar">
+                <span class="wall-badge" aria-hidden="true">B</span>
+                <p class="wall-title">
+                  Reseñas verificadas
+                  <span>{reviews.length} de {rating?.count ?? reviews.length} · Booksy</span>
                 </p>
-              )}
+                <span class="wall-stars" aria-hidden="true">
+                  {Array.from({ length: 5 }, () => <Icon name="star" filled />)}
+                </span>
+              </div>
+              <div
+                class="wall-scroll"
+                tabindex="0"
+                role="region"
+                aria-label={`Reseñas de clientes (${reviews.length}). Desplázate para leer más.`}
+                data-wall-scroll
+              >
+                <ul class="msgs">
+                  {reviews.map((r, i) => (
+                    <li class:list={['msg', i % 2 && 'msg--alt']} data-msg>
+                      <span class={`msg-avatar tone-${tone(r.author)}`} aria-hidden="true">
+                        {initials(r.author)}
+                      </span>
+                      <article class="msg-bubble" aria-label={`Reseña de ${r.author}`}>
+                        <header class="msg-head">
+                          <span class="msg-author">{r.author}</span>
+                          <span class="msg-verified">
+                            <Icon name="check" /> Cliente verificado
+                          </span>
+                        </header>
+                        {r.rating && (
+                          <p class="msg-stars" role="img" aria-label={`${r.rating} de 5 estrellas`}>
+                            {Array.from({ length: 5 }, (_, k) => (
+                              <span class:list={['msg-star', k >= (r.rating ?? 0) && 'is-off']}>
+                                <Icon name="star" filled />
+                              </span>
+                            ))}
+                          </p>
+                        )}
+                        <blockquote class="msg-text" lang={r.lang}>
+                          <p>{r.text}</p>
+                        </blockquote>
+                        <footer class="msg-foot">
+                          {r.service && <span class="msg-service">{r.service}</span>}
+                          {r.date && <time datetime={r.date}>{dayFmt.format(new Date(r.date))}</time>}
+                          <span class="sr-only">, en {SOURCE_LABEL[r.source]}</span>
+                        </footer>
+                      </article>
+                    </li>
+                  ))}
+                </ul>
+                {sources[0].url && (
+                  <p class="msgs-end">
+                    ¿Quieres leer más?{' '}
+                    <a href={sources[0].url} target="_blank" rel="noopener noreferrer">
+                      {sources[0].label} en Booksy<span class="sr-only"> (pestaña nueva)</span>
+                    </a>
+                  </p>
+                )}
+              </div>
             </div>
             <p class="wall-hint" aria-hidden="true" data-wall-hint>
               Desliza para leer más <Icon name="arrow" class="arrow" />
             </p>
-          </div>
+          </>
         ) : (
           <>
             <p class="reviews-note">Las reseñas completas, con nombre y fecha, se publican en Booksy y en Google.</p>
@@ -180,7 +182,7 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
   const wall = document.querySelector<HTMLElement>('[data-wall]');
   const scroller = wall?.querySelector<HTMLElement>('[data-wall-scroll]');
   if (wall && scroller) {
-    const hint = wall.querySelector<HTMLElement>('[data-wall-hint]');
+    const hint = document.querySelector<HTMLElement>('[data-wall-hint]');
     const onScroll = (): void => {
       if (scroller.scrollTop > 40) hint?.classList.add('is-gone');
     };
@@ -580,11 +582,11 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
     transform: none;
   }
 
+  /* Debajo del panel, centrada; se retira al desplazar dentro del panel. */
   .wall-hint {
-    position: absolute;
-    left: 50%;
-    bottom: 0.9rem;
-    display: inline-flex;
+    display: flex;
+    width: fit-content;
+    margin: 1rem auto 0;
     align-items: center;
     gap: 0.4rem;
     padding: 0.45rem 0.85rem;
@@ -595,7 +597,6 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
     font-weight: 750;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    translate: -50% 0;
     pointer-events: none;
     transition:
       opacity 0.4s,
@@ -608,7 +609,7 @@ const ratingText = rating?.value.toLocaleString('es-ES', { minimumFractionDigits
   }
   .wall-hint:global(.is-gone) {
     opacity: 0;
-    translate: -50% 10px;
+    translate: 0 -8px;
   }
   @media (prefers-reduced-motion: no-preference) {
     .wall-hint :global(.arrow) {

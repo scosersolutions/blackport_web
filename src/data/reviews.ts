@@ -1,6 +1,7 @@
 /**
- * Reseñas auténticas, copiadas de las fuentes oficiales con permiso.
- * No añadir reseñas inventadas, parafraseadas ni puntuaciones agregadas.
+ * Citas de reseñas auténticas, copiadas de las fuentes oficiales con permiso.
+ * No añadir reseñas inventadas ni parafraseadas. La valoración media de Booksy
+ * vive en `site.booksyRating` (src/config/site.ts), con la fecha del dato.
  */
 export type ReviewSource = 'google' | 'booksy';
 

@@ -5,42 +5,74 @@ import Icon from '../ui/Icon.astro';
 import Pending from '../ui/Pending.astro';
 import LavaEdge from '../lava/LavaEdge.astro';
 import { bookingPhoto } from '@/data/media';
-import { site } from '@/config/site';
+import { site, BOOKSY_URL } from '@/config/site';
 import { valueOf } from '@/lib/pending';
+import { DAY_NAME, formatSlots } from '@/lib/hours';
 
 const hours = valueOf(site.hours);
+const ring = 'Reserva en Booksy · Reserva en Booksy · ';
 ---
 
-<section id="reservar" class="booking surface-dark grain" aria-labelledby="booking-title">
+<section id="reservar" class="booking surface-dark grain" aria-labelledby="booking-title" data-progress>
   <LavaEdge class="booking-pour" seed={512} base={14} amp={9} drips={11} minLen={20} maxLen={190} minW={10} maxW={30} />
 
   <div class="booking-photo" data-parallax="0.08">
-    <MediaFrame photo={bookingPhoto} sizes="(min-width: 900px) 45vw, 100vw" widths={[480, 853]} />
+    <MediaFrame photo={bookingPhoto} sizes="(min-width: 900px) 46vw, 100vw" widths={[480, 853]} />
   </div>
   <div class="booking-shade" aria-hidden="true"></div>
 
   <div class="booking-inner wrap">
-    <p class="eyebrow" data-reveal="rise">Reservas · Booksy</p>
-    <h2 id="booking-title" class="booking-title" data-reveal="lines">
-      <span class="line-mask"><span>Tu próximo corte </span></span>
-      <span class="line-mask"><span class="booking-red">empieza aquí. </span></span>
-    </h2>
-    <p class="booking-text" data-reveal="rise" style="--delay:.15s">
-      Reserva tu cita en Booksy: elige el servicio, el día y la hora que mejor te vengan.
-    </p>
-    <div class="booking-cta" data-reveal="rise" style="--delay:.25s">
-      <BookingCta size="lg" placement="booking" />
+    <div class="booking-main">
+      <p class="eyebrow" data-reveal="rise"><span class="idx">(04)</span> Reservas · Booksy</p>
+      <h2 id="booking-title" class="booking-title" data-reveal="lines">
+        <span class="line-mask"><span>Tu próximo </span></span>
+        <span class="line-mask"><span><span class="outline">corte</span> </span></span>
+        <span class="line-mask"><span class="lava-text">empieza </span></span>
+        <span class="line-mask"><span class="lava-text">aquí. </span></span>
+      </h2>
+      <p class="booking-text" data-reveal="rise" style="--delay:.15s">
+        Elige servicio, día y hora directamente en Booksy, a cualquier hora del día.
+      </p>
+      <div class="booking-cta" data-reveal="rise" style="--delay:.25s">
+        <BookingCta size="lg" placement="booking" />
+      </div>
     </div>
 
-    <div class="booking-hours">
-      <Icon name="clock" />
+    {
+      BOOKSY_URL && (
+        <a class="orb" href={BOOKSY_URL} target="_blank" rel="noopener noreferrer" data-magnetic="0.3" data-cta="booking" data-placement="booking-orb">
+          <svg class="orb-ring" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+            <defs>
+              <path id="orb-path" d="M100 100 m-78 0 a78 78 0 1 1 156 0 a78 78 0 1 1 -156 0" />
+            </defs>
+            <text>
+              <textPath href="#orb-path" textLength="486" lengthAdjust="spacing">{ring}</textPath>
+            </text>
+          </svg>
+          <span class="orb-core">
+            <span>Reservar</span>
+            <Icon name="arrow" class="arrow" />
+          </span>
+          <span class="sr-only">en Booksy (pestaña nueva)</span>
+        </a>
+      )
+    }
+
+    <div class="booking-hours" data-reveal="rise" style="--delay:.3s">
+      <div class="bh-head">
+        <span class="bh-title"><Icon name="clock" /> Horario</span>
+        <p class="status" data-status hidden>
+          <span class="status-dot" aria-hidden="true"></span>
+          <span data-status-label></span>
+        </p>
+      </div>
       {
         hours ? (
-          <dl>
-            {hours.map((h) => (
-              <div>
-                <dt>{h.days}</dt>
-                <dd>{h.hours}</dd>
+          <dl class="bh-list">
+            {hours.map((d) => (
+              <div class:list={['bh-row', !d.slots.length && 'is-closed']} data-day={d.day}>
+                <dt>{DAY_NAME[d.day]}</dt>
+                <dd>{formatSlots(d)}</dd>
               </div>
             ))}
           </dl>
@@ -54,11 +86,9 @@ const hours = valueOf(site.hours);
 
 <style>
   .booking {
+    --p: 0;
     position: relative;
-    min-height: min(92svh, 860px);
-    display: flex;
-    align-items: center;
-    padding-block: clamp(9rem, 14vw, 13rem) var(--section-y);
+    padding-block: clamp(10rem, 15vw, 14rem) var(--section-y);
     overflow: hidden;
     isolation: isolate;
   }
@@ -73,81 +103,212 @@ const hours = valueOf(site.hours);
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(48%, 760px);
+    width: min(46%, 780px);
   }
   .booking-photo :global(.media) {
-    height: 110%;
+    height: 112%;
   }
   .booking-shade {
     position: absolute;
     inset: 0;
     z-index: -1;
     background:
-      linear-gradient(90deg, var(--c-ink) 45%, rgb(9 9 9 / 0.55) 62%, rgb(9 9 9 / 0.15)),
+      linear-gradient(90deg, var(--c-ink) 50%, rgb(9 9 9 / 0.5) 68%, rgb(9 9 9 / 0.1)),
       linear-gradient(0deg, var(--c-ink), transparent 30%);
   }
+
   .booking-inner {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-areas: 'main orb' 'hours orb';
+    column-gap: 3rem;
+    row-gap: clamp(3rem, 6vw, 5rem);
+  }
+  .booking-main {
+    grid-area: main;
   }
   .booking-title {
     margin-block: 1.4rem 1.6rem;
-    font-size: clamp(2.6rem, 1rem + 6vw, 6.6rem);
-    font-weight: 820;
-    font-stretch: 80%;
+    font-size: clamp(3rem, 0.8rem + 8.4vw, 9.5rem);
+    font-weight: 860;
+    font-stretch: var(--wd-poster);
     line-height: 0.9;
     text-transform: uppercase;
   }
-  .booking-red {
-    color: var(--c-lava);
-  }
   .booking-text {
-    max-width: 40ch;
+    max-width: 38ch;
     color: rgb(255 255 255 / 0.78);
     font-size: var(--fs-lead);
   }
   .booking-cta {
+    display: none;
     margin-top: 2.25rem;
   }
-  .booking-hours {
-    display: flex;
-    gap: 0.9rem;
-    align-items: flex-start;
-    margin-top: 3rem;
-    color: var(--c-ash);
-    font-size: var(--fs-small);
+
+  /* ── Orbe de reserva: anillo de texto que gira con el scroll ── */
+  .orb {
+    grid-area: orb;
+    align-self: center;
+    justify-self: center;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: clamp(190px, 17vw, 250px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    color: var(--c-white);
+    transition: transform 0.45s var(--ease-out);
   }
-  .booking-hours :global(.icon) {
-    flex: none;
-    width: 20px;
+  .orb-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform: rotate(calc(var(--p) * 300deg));
+    font-size: 15.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    fill: currentColor;
+  }
+  .orb-core {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: 0.2rem;
+    width: 62%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--c-lava);
+    font-size: 0.82rem;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    overflow: hidden;
+    isolation: isolate;
+    transition: color 0.4s var(--ease-out);
+  }
+  .orb-core::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--c-white);
+    border-radius: inherit;
+    transform: scale(0);
+    transition: transform 0.5s var(--ease-liquid);
+  }
+  .orb:hover .orb-core,
+  .orb:focus-visible .orb-core {
+    color: var(--c-ink);
+  }
+  .orb:hover .orb-core::before,
+  .orb:focus-visible .orb-core::before {
+    transform: none;
+  }
+  .orb-core :global(.arrow) {
+    width: 22px;
+    transform: rotate(-45deg);
+    transition: transform 0.45s var(--ease-out);
+  }
+  .orb:hover .orb-core :global(.arrow) {
+    transform: rotate(0deg);
+  }
+  .orb:focus-visible {
+    outline-offset: 6px;
+  }
+
+  /* ── Horario ── */
+  .booking-hours {
+    grid-area: hours;
+    max-width: 30rem;
+  }
+  .bh-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 2px solid var(--c-white);
+  }
+  .bh-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .bh-title :global(.icon) {
+    width: 18px;
     color: var(--c-lava-bright);
   }
-  .booking-hours dl {
-    display: grid;
-    gap: 0.3rem;
+  .bh-list {
     margin: 0;
   }
-  .booking-hours dl div {
+  .bh-row {
+    position: relative;
     display: flex;
+    justify-content: space-between;
     gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--c-line-dark);
+    font-size: var(--fs-small);
   }
-  .booking-hours dd {
+  .bh-row dt {
+    color: var(--c-ash);
+  }
+  .bh-row dd {
     margin: 0;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .bh-row.is-closed dd {
+    color: var(--c-ash);
+  }
+  .bh-row:global(.is-today) dt,
+  .bh-row:global(.is-today) dd {
     color: var(--c-white);
+    font-weight: 700;
+  }
+  .bh-row:global(.is-today) dt::after {
+    content: 'Hoy';
+    margin-left: 0.6rem;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: var(--c-lava);
+    color: var(--c-white);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    vertical-align: 0.1em;
   }
 
   @media (max-width: 899px) {
     .booking {
-      align-items: flex-end;
-      min-height: 0;
-      padding-top: 58vw;
+      padding-top: 64vw;
     }
     .booking-photo {
       width: 100%;
       bottom: auto;
-      height: 75vw;
+      height: 82vw;
     }
     .booking-shade {
-      background: linear-gradient(0deg, var(--c-ink) 40%, rgb(9 9 9 / 0.3) 75%, rgb(9 9 9 / 0.5));
+      background: linear-gradient(0deg, var(--c-ink) 42%, rgb(9 9 9 / 0.3) 75%, rgb(9 9 9 / 0.5));
+    }
+    .booking-inner {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'main' 'hours';
+    }
+    .orb {
+      display: none;
+    }
+    .booking-cta {
+      display: block;
     }
     .booking-cta :global(.btn) {
       width: 100%;

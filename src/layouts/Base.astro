@@ -2,6 +2,9 @@
 import '@/styles/global.css';
 import { site, BOOKSY_URL } from '@/config/site';
 import { valueOf } from '@/lib/pending';
+import { toSchema } from '@/lib/hours';
+import { priceRange } from '@/data/services';
+import Intro from '@/components/Intro.astro';
 
 interface Props {
   title: string;
@@ -19,12 +22,18 @@ const phone = valueOf(site.phone);
 const email = valueOf(site.email);
 const instagram = valueOf(site.instagram);
 const mapsUrl = valueOf(site.mapsUrl);
+const hours = valueOf(site.hours);
+const booksyProfile = valueOf(site.booksyReviewsUrl);
+const prices = priceRange();
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BarberShop',
   name: site.name,
+  alternateName: site.alternateNames,
   description: site.description,
   areaServed: site.island,
+  ...(hours && { openingHoursSpecification: toSchema(hours) }),
+  ...(prices && { priceRange: prices }),
   ...(canonical && { url: canonical }),
   ...(ogImage && { image: ogImage }),
   ...(address && {
@@ -33,7 +42,7 @@ const jsonLd = {
       streetAddress: address.street,
       postalCode: address.postalCode,
       addressLocality: address.locality,
-      addressRegion: site.island,
+      addressRegion: address.region,
       addressCountry: 'ES',
     },
   }),
@@ -44,8 +53,8 @@ const jsonLd = {
   ...(BOOKSY_URL && {
     potentialAction: { '@type': 'ReserveAction', target: BOOKSY_URL },
   }),
-  ...((instagram || BOOKSY_URL) && {
-    sameAs: [instagram?.url, BOOKSY_URL].filter(Boolean),
+  ...((instagram || booksyProfile) && {
+    sameAs: [instagram?.url, booksyProfile].filter(Boolean),
   }),
 };
 ---
@@ -75,11 +84,22 @@ const jsonLd = {
     <meta name="twitter:card" content="summary_large_image" />
 
     <script is:inline>
-      document.documentElement.classList.add('js');
+      (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
+        // Intro solo en la primera visita de la sesión, sin enlace profundo ni reduced-motion.
+        try {
+          if (!location.hash && !sessionStorage.getItem('bp-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            d.classList.add('intro-on');
+            sessionStorage.setItem('bp-intro', '1');
+          }
+        } catch (e) {}
+      })();
     </script>
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
+    <Intro />
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
     <slot />
     <script>

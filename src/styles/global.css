@@ -174,14 +174,79 @@ button {
   color: var(--c-lava-ink);
 }
 
+/* Índice editorial de sección: «(03) Servicios». */
+.eyebrow .idx {
+  color: var(--c-white);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+.surface-light .eyebrow .idx {
+  color: var(--c-ink);
+}
+
+/* Titulares de cartel: condensados, pesados, muy cerrados. */
 .h2 {
   font-size: var(--fs-h2);
-  font-weight: 640;
-  font-stretch: 96%;
-  line-height: 0.98;
-  letter-spacing: -0.012em;
+  font-weight: 820;
+  font-stretch: var(--wd-poster);
+  line-height: 0.88;
+  letter-spacing: -0.005em;
   text-transform: uppercase;
   text-wrap: balance;
+}
+
+/* Palabra en contorno para contrastar dentro de un titular. */
+.outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+}
+.surface-dark .outline,
+.surface-dark-2 .outline {
+  -webkit-text-stroke-color: rgb(255 255 255 / 0.9);
+}
+.surface-light .outline {
+  -webkit-text-stroke-color: var(--c-ink);
+}
+.lava-text {
+  color: var(--c-lava);
+}
+
+/* Estado abierto/cerrado (lo rellena el script de horario). */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.status[hidden] {
+  display: none;
+}
+.status-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c-ash);
+}
+.status.is-open .status-dot {
+  background: #3ddc84;
+}
+.status.is-open .status-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: ping 2s var(--ease-out) infinite;
+}
+@keyframes ping {
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
 }
 
 .lead {
@@ -363,6 +428,21 @@ button {
   clip-path: inset(0 0 0 0);
 }
 
+/* Foto que se abre desde el centro mientras la imagen se asienta (de 1.2 a 1). */
+.js [data-reveal='frame'] {
+  clip-path: inset(14% 12% 14% 12%);
+  transition: clip-path 1.4s var(--ease-liquid);
+  transition-delay: var(--delay, 0s);
+}
+.js [data-reveal='frame'] .media {
+  transform: scale(1.22);
+  transition: transform 1.8s var(--ease-out);
+  transition-delay: var(--delay, 0s);
+}
+.js [data-reveal='frame'].is-in .media {
+  transform: none;
+}
+
 /* Líneas de titular que emergen desde su propia máscara. */
 .line-mask {
   display: block;
@@ -389,6 +469,62 @@ button {
 }
 .js [data-reveal='lines'].is-in .line-mask > span {
   transform: none;
+}
+
+/* Entrada coreografiada del primer pantallazo (no depende del scroll).
+   --i ordena los elementos; --intro-delay espera a la cortina de la intro. */
+.js [data-enter] {
+  animation: enter-rise 1.1s var(--ease-out) both;
+  animation-delay: calc(var(--intro-delay) + var(--i, 0) * 90ms);
+}
+.js [data-enter='mask'] {
+  animation: enter-mask 1.6s var(--ease-liquid) both;
+  animation-delay: calc(var(--intro-delay) + var(--i, 0) * 90ms);
+}
+.js [data-enter='fade'] {
+  animation-name: enter-fade;
+  animation-duration: 1.6s;
+}
+.js [data-enter='lines'] {
+  animation: none;
+}
+.js [data-enter='lines'] .line-mask > span {
+  animation: enter-line 1.15s var(--ease-out) both;
+  animation-delay: calc(var(--intro-delay) + 0.12s + var(--l, 0) * 0.1s);
+}
+/* Línea sin máscara (p. ej. con goteos que sobresalen): sube con fundido. */
+.js [data-enter='lines'] .line-mask[data-fade] > span {
+  animation-name: enter-line-fade;
+}
+@keyframes enter-line-fade {
+  from {
+    opacity: 0;
+    transform: translateY(40%);
+  }
+}
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes enter-mask {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes enter-line {
+  from {
+    transform: translateY(108%);
+  }
 }
 
 /* Goteos: crecen desde su raíz al entrar en pantalla. */
@@ -425,11 +561,14 @@ button {
   *::after {
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
+    animation-delay: 0s !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
   .js [data-reveal],
   .js [data-reveal] .line-mask > span,
+  .js [data-reveal='frame'] .media,
+  .js [data-enter],
   .js [data-lava] .drip,
   .js [data-lava] .slash-body {
     opacity: 1 !important;

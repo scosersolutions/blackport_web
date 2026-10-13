@@ -1,131 +1,263 @@
 ---
 import MediaFrame from '../ui/MediaFrame.astro';
 import BookingCta from '../ui/BookingCta.astro';
-import Pending from '../ui/Pending.astro';
 import LavaEdge from '../lava/LavaEdge.astro';
-import { services, servicePreview, formatPrice, formatDuration } from '@/data/services';
-import { servicesPhoto } from '@/data/media';
+import { services, CATEGORY_ORDER, CATEGORY_TITLE, formatPrice, formatDuration } from '@/data/services';
+import { servicePhotos } from '@/data/media';
 
-const isPreview = services.length === 0;
-const rows = isPreview ? servicePreview : services;
+const groups = CATEGORY_ORDER.map((cat) => ({ cat, items: services.filter((s) => s.category === cat) })).filter(
+  (g) => g.items.length > 0,
+);
+const total = String(groups.length).padStart(2, '0');
 ---
 
-<section id="servicios" class="services section surface-dark-2" aria-labelledby="services-title">
-  <div class="services-grid wrap">
+<section id="servicios" class="services section surface-dark-2 grain" aria-labelledby="services-title">
+  <div class="wrap">
     <header class="services-head">
-      <p class="eyebrow" data-reveal="rise">Servicios</p>
-      <h2 id="services-title" class="h2" data-reveal="lines">
+      <p class="eyebrow" data-reveal="rise"><span class="idx">(02)</span> Servicios</p>
+      <h2 id="services-title" class="h2 services-title" data-reveal="lines">
         <span class="line-mask"><span>Tu estilo, </span></span>
-        <span class="line-mask"><span>nuestro trabajo. </span></span>
+        <span class="line-mask"><span><span class="outline">nuestro</span> trabajo. </span></span>
       </h2>
-      <p class="muted services-intro" data-reveal="rise">
-        Del corte clásico al color más atrevido: cada servicio pensado para que salgas con tu mejor versión.
+      <p class="services-intro muted" data-reveal="rise" style="--delay:.15s">
+        Del corte de cada semana al cambio de color completo. Precios y tiempos según nuestra carta en Booksy.
       </p>
-      {isPreview && <Pending label="carta de servicios: nombres, precios y duraciones" />}
     </header>
 
-    <div class="services-list-wrap">
-      <div class="services-cols" aria-hidden="true">
-        <span>Servicio</span><span>Duración</span><span>Precio</span>
+    <div class="services-body">
+      <div class="services-visual" aria-hidden="true">
+        <div class="sv-frame" data-reveal="frame">
+          {
+            groups.map((g, i) => (
+              <div class:list={['sv-img', i === 0 && 'is-on']} data-sv-img={g.cat}>
+                <MediaFrame photo={servicePhotos[g.cat]} sizes="(min-width: 900px) 34vw, 1px" widths={[480, 853]} />
+              </div>
+            ))
+          }
+          <span class="sv-label">
+            <span class="sv-num" data-sv-num>01</span>/{total}
+            <span class="sv-name" data-sv-name>{CATEGORY_TITLE[groups[0].cat]}</span>
+          </span>
+        </div>
+        <LavaEdge
+          class="sv-drip"
+          seed={77}
+          base={0}
+          amp={0}
+          width={200}
+          minWidth="0px"
+          fixed={[
+            { t: 0.3, len: 52, w: 8 },
+            { t: 0.55, len: 128, w: 13 },
+            { t: 0.82, len: 80, w: 10 },
+          ]}
+        />
       </div>
-      <ol class="services-list">
+
+      <div class="services-menu">
         {
-          rows.map((s, i) => {
-            const duration = formatDuration(s);
-            const price = formatPrice(s);
-            return (
-              <li class="service" data-reveal="rise" style={`--delay:${(i * 0.06).toFixed(2)}s`}>
-                <span class="service-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-                <span class="service-main">
-                  <span class="service-name">{s.name}</span>
-                  {s.description && <span class="service-desc">{s.description}</span>}
-                </span>
-                <span class="service-meta">
-                  <span class="sr-only">Duración:</span>
-                  {duration ?? <span aria-label="sin especificar">—</span>}
-                </span>
-                <span class="service-meta">
-                  <span class="sr-only">Precio:</span>
-                  {price ?? <span aria-label="sin especificar">—</span>}
-                </span>
-              </li>
-            );
-          })
+          groups.map((g, gi) => (
+            <section class="svc-group" data-svc-group={g.cat} data-svc-index={gi} data-svc-title={CATEGORY_TITLE[g.cat]} aria-labelledby={`svc-${g.cat}`}>
+              <div class="svc-banner" aria-hidden="true">
+                <MediaFrame photo={servicePhotos[g.cat]} sizes="(max-width: 899px) 92vw, 1px" widths={[480, 853]} />
+              </div>
+              <h3 id={`svc-${g.cat}`} class="svc-group-title" data-reveal="rise">
+                <span class="svc-group-num">{String(gi + 1).padStart(2, '0')}</span>
+                {CATEGORY_TITLE[g.cat]}
+              </h3>
+              <ul class="svc-list">
+                {g.items.map((s, i) => {
+                  const price = formatPrice(s);
+                  const duration = formatDuration(s);
+                  return (
+                    <li class="svc" data-reveal="rise" style={`--delay:${(i * 0.06).toFixed(2)}s`}>
+                      <span class="svc-name">
+                        {s.name}
+                        {s.popular && <span class="svc-tag">Top</span>}
+                      </span>
+                      <span class="svc-lead" aria-hidden="true" />
+                      <span class="svc-price">
+                        <span class="sr-only">Precio: </span>
+                        {price ?? '—'}
+                      </span>
+                      <span class="svc-meta">
+                        {duration && (
+                          <span class="svc-dur">
+                            <span class="sr-only">Duración: </span>
+                            {duration}
+                          </span>
+                        )}
+                        {s.description && <span class="svc-desc">{s.description}</span>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))
         }
-      </ol>
-      <div class="services-cta">
-        <BookingCta label="Reservar servicio" variant="outline-lava" placement="services" />
+
+        <div class="services-cta" data-reveal="rise">
+          <BookingCta label="Reservar en Booksy" size="lg" placement="services" magnetic />
+          <p class="services-note">«Top»: los servicios más reservados. El precio final se confirma en Booksy al reservar.</p>
+        </div>
       </div>
     </div>
-
-    <figure class="services-photo">
-      <div class="services-photo-frame" data-reveal="mask">
-        <MediaFrame photo={servicesPhoto} sizes="(min-width: 1100px) 26vw, 60vw" widths={[480, 853]} />
-      </div>
-      <LavaEdge
-        class="services-drip"
-        seed={77}
-        base={0}
-        amp={0}
-        width={200}
-        minWidth="0px"
-        fixed={[
-          { t: 0.3, len: 52, w: 8 },
-          { t: 0.55, len: 128, w: 13 },
-          { t: 0.82, len: 80, w: 10 },
-        ]}
-      />
-    </figure>
   </div>
 </section>
 
-<style>
-  .services-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    column-gap: clamp(1rem, 2vw, 2rem);
-    row-gap: 3rem;
+<script>
+  // La foto fija cambia según el grupo de la carta que ocupa el centro de la pantalla.
+  const imgs = document.querySelectorAll<HTMLElement>('[data-sv-img]');
+  const groups = document.querySelectorAll<HTMLElement>('[data-svc-group]');
+  const num = document.querySelector<HTMLElement>('[data-sv-num]');
+  const name = document.querySelector<HTMLElement>('[data-sv-name]');
+  if (imgs.length && groups.length && 'IntersectionObserver' in window) {
+    const activate = (group: HTMLElement): void => {
+      const cat = group.dataset.svcGroup;
+      imgs.forEach((img) => img.classList.toggle('is-on', img.dataset.svImg === cat));
+      if (num) num.textContent = String(Number(group.dataset.svcIndex) + 1).padStart(2, '0');
+      if (name) name.textContent = group.dataset.svcTitle ?? '';
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) activate(e.target as HTMLElement);
+      },
+      { rootMargin: '-45% 0px -45% 0px' },
+    );
+    groups.forEach((g) => io.observe(g));
   }
+</script>
+
+<style>
   .services-head {
-    grid-column: 1 / span 5;
     display: grid;
-    gap: 1.25rem;
-    align-content: start;
-    justify-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+    grid-template-areas: 'eyebrow eyebrow' 'title intro';
+    align-items: end;
+    gap: 1.5rem 3rem;
+    margin-bottom: clamp(3.5rem, 7vw, 6.5rem);
+  }
+  .services-head .eyebrow {
+    grid-area: eyebrow;
+  }
+  .services-title {
+    grid-area: title;
   }
   .services-intro {
-    max-width: 38ch;
+    grid-area: intro;
+    font-size: var(--fs-lead);
   }
-  .services-list-wrap {
-    grid-column: 1 / span 8;
-    grid-row: 2;
-  }
-  .services-cols,
-  .service {
+
+  .services-body {
     display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr) 7rem 7rem;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 6rem);
+    align-items: start;
+  }
+
+  /* Foto fija: cambia con un fundido + leve zoom. */
+  .services-visual {
+    position: sticky;
+    top: calc(var(--nav-h) + 1.5rem);
+  }
+  .sv-frame {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    max-height: calc(100svh - var(--nav-h) - 4rem);
+    overflow: hidden;
+    background: var(--c-ink);
+  }
+  .sv-img {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: scale(1.08);
+    transition:
+      opacity 0.8s var(--ease-out),
+      transform 1.4s var(--ease-out);
+  }
+  .sv-img.is-on {
+    opacity: 1;
+    transform: none;
+  }
+  .sv-label {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--c-ink);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--c-ash);
+  }
+  .sv-num {
+    color: var(--c-lava-bright);
+  }
+  .sv-name {
+    margin-left: 0.6rem;
+    color: var(--c-white);
+  }
+  .sv-drip {
+    position: absolute;
+    right: 8%;
+    bottom: 0;
+    width: 42%;
+    transform: translateY(calc(100% - 4px));
+  }
+
+  .svc-banner {
+    display: none;
+  }
+  .svc-group + .svc-group {
+    margin-top: clamp(3rem, 6vw, 5rem);
+  }
+  .svc-group-title {
+    display: flex;
     align-items: baseline;
     gap: 1rem;
-  }
-  .services-cols {
-    padding-bottom: 0.9rem;
-    border-bottom: 1px solid var(--c-line-dark);
-    color: var(--c-ash);
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.2em;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--c-white);
+    font-size: clamp(1.1rem, 0.9rem + 0.7vw, 1.5rem);
+    font-weight: 750;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
-  .services-cols span:first-child {
-    grid-column: 2;
+  .svc-group-num {
+    font-size: 0.75rem;
+    color: var(--c-lava-bright);
+    letter-spacing: 0.12em;
   }
-  .service {
+
+  .svc {
     position: relative;
-    padding-block: 1.5rem;
+    display: grid;
+    grid-template-columns: auto minmax(1.5rem, 1fr) auto;
+    grid-template-areas: 'name lead price' 'meta meta meta';
+    align-items: baseline;
+    column-gap: 0.9rem;
+    row-gap: 0.35rem;
+    padding-block: 1.15rem;
     border-bottom: 1px solid var(--c-line-dark);
+    isolation: isolate;
   }
-  /* Línea de lava que recorre la fila al pasar el cursor. */
-  .service::after {
+  /* Barrido rojo muy tenue y línea de lava al pasar por encima. */
+  .svc::before {
+    content: '';
+    position: absolute;
+    inset: 0 calc(var(--gutter) * -0.4);
+    z-index: -1;
+    background: linear-gradient(90deg, rgb(204 39 49 / 0.16), transparent 75%);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .svc::after {
     content: '';
     position: absolute;
     left: 0;
@@ -137,114 +269,106 @@ const rows = isPreview ? servicePreview : services;
     transform-origin: left;
     transition: transform 0.6s var(--ease-out);
   }
-  .service:hover::after {
-    transform: scaleX(1);
+  .svc:hover::before,
+  .svc:hover::after {
+    transform: none;
   }
-  .service-num {
-    color: var(--c-ash);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+  .svc-name {
+    grid-area: name;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: clamp(1.35rem, 0.95rem + 1.4vw, 2.2rem);
+    font-weight: 780;
+    font-stretch: var(--wd-tight);
+    line-height: 1.05;
+    text-transform: uppercase;
+    transition: transform 0.5s var(--ease-out);
+  }
+  .svc:hover .svc-name {
+    transform: translateX(8px);
+  }
+  .svc-tag {
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    background: var(--c-lava);
+    color: var(--c-white);
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-stretch: 100%;
+    letter-spacing: 0.16em;
+  }
+  .svc-lead {
+    grid-area: lead;
+    align-self: center;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.28) 0 2px, transparent 2px 7px);
+  }
+  .svc-price {
+    grid-area: price;
+    font-size: clamp(1.35rem, 0.95rem + 1.4vw, 2.2rem);
+    font-weight: 780;
+    font-stretch: var(--wd-tight);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
     transition: color 0.3s;
   }
-  .service:hover .service-num {
+  .svc:hover .svc-price {
     color: var(--c-lava-bright);
   }
-  .service-main {
-    display: grid;
-    gap: 0.3rem;
-    transition: transform 0.45s var(--ease-out);
-  }
-  .service:hover .service-main {
-    transform: translateX(6px);
-  }
-  .service-name {
-    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
-    font-weight: 680;
-    font-stretch: 94%;
-    text-transform: uppercase;
-    line-height: 1.1;
-  }
-  .service-desc {
+  .svc-meta {
+    grid-area: meta;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1rem;
     color: var(--c-ash);
     font-size: var(--fs-small);
   }
-  .service-meta {
-    font-variant-numeric: tabular-nums;
+  .svc-dur {
+    color: var(--c-white);
     font-weight: 600;
+    letter-spacing: 0.04em;
   }
+  .svc-desc {
+    max-width: 52ch;
+  }
+
   .services-cta {
-    margin-top: 2.25rem;
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+  .services-note {
+    max-width: 46ch;
+    color: var(--c-ash);
+    font-size: var(--fs-small);
   }
 
-  .services-photo {
-    position: relative;
-    grid-column: 9 / span 4;
-    grid-row: 1 / span 2;
-    align-self: center;
-    margin-top: 4rem;
-  }
-  .services-photo-frame {
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-  }
-  .services-drip {
-    position: absolute;
-    right: -4%;
-    bottom: 0;
-    width: 46%;
-    transform: translateY(calc(100% - 4px));
-  }
-
-  @media (max-width: 1099px) {
-    .services-head,
-    .services-list-wrap {
-      grid-column: 1 / -1;
-    }
-    .services-photo {
-      grid-column: 6 / -1;
-      grid-row: 1;
-      margin-top: 0;
-    }
+  @media (max-width: 899px) {
     .services-head {
-      grid-column: 1 / span 6;
+      grid-template-columns: 1fr;
+      grid-template-areas: 'eyebrow' 'title' 'intro';
     }
-  }
-  @media (max-width: 699px) {
-    .services-head {
-      grid-column: 1 / -1;
+    .services-body {
+      grid-template-columns: 1fr;
     }
-    .services-photo {
-      grid-column: 4 / -1;
-      grid-row: 2;
-    }
-    .services-list-wrap {
-      grid-row: 3;
-      margin-top: 4rem;
-    }
-    .services-cols {
+    .services-visual {
       display: none;
     }
-    .service {
-      grid-template-columns: 2rem minmax(0, 1fr) auto;
-      grid-template-areas: 'num main main' '. dur price';
-      row-gap: 0.6rem;
+    .svc-banner {
+      display: block;
+      aspect-ratio: 16 / 7;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
     }
-    .service-num {
-      grid-area: num;
+    .svc-name,
+    .svc-price {
+      font-size: clamp(1.2rem, 0.9rem + 1.6vw, 1.6rem);
     }
-    .service-main {
-      grid-area: main;
-    }
-    .service-meta {
-      font-size: var(--fs-small);
-      color: var(--c-ash);
-    }
-    .service-meta:nth-of-type(3) {
-      grid-area: dur;
-    }
-    .service-meta:last-child {
-      grid-area: price;
+    .services-cta :global(.btn) {
+      width: 100%;
     }
   }
 </style>

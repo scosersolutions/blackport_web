@@ -14,10 +14,12 @@ const { items } = Astro.props;
 const instagram = valueOf(site.instagram);
 const phone = valueOf(site.phone);
 const email = valueOf(site.email);
+const address = valueOf(site.address);
+const mapsUrl = valueOf(site.mapsUrl);
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer surface-dark">
+<footer class="footer surface-dark" data-progress>
   <LavaEdge
     class="footer-drip"
     seed={2024}
@@ -37,7 +39,15 @@ const year = new Date().getFullYear();
   <div class="footer-inner wrap">
     <div class="footer-brand">
       <Logo width={150} />
-      <p class="muted">Barbería en {site.island}.</p>
+      <p class="muted">Barbería en {address?.locality ?? site.island}, {site.island}.</p>
+      {
+        address && mapsUrl && (
+          <a class="footer-address" href={mapsUrl} target="_blank" rel="noopener noreferrer">
+            {address.street}, {address.postalCode} {address.locality}
+            <span class="sr-only">(abre Google Maps en una pestaña nueva)</span>
+          </a>
+        )
+      }
     </div>
 
     <nav class="footer-nav" aria-label="Secundaria">
@@ -58,6 +68,7 @@ const year = new Date().getFullYear();
           <li>
             <a href={instagram.url} target="_blank" rel="noopener noreferrer">
               <Icon name="instagram" /> @{instagram.handle}
+              <span class="sr-only">(pestaña nueva)</span>
             </a>
           </li>
         )
@@ -85,12 +96,17 @@ const year = new Date().getFullYear();
           <li>
             <a href={BOOKSY_URL} target="_blank" rel="noopener noreferrer">
               <Icon name="calendar" /> Reservar en Booksy
+              <span class="sr-only">(pestaña nueva)</span>
             </a>
           </li>
         )
       }
     </ul>
   </div>
+
+  <p class="footer-word" aria-hidden="true">
+    <span>Black</span><span class="lava-text">port</span>
+  </p>
 
   <div class="footer-base wrap">
     <p>© {year} {site.name}. Todos los derechos reservados.</p>
@@ -100,9 +116,12 @@ const year = new Date().getFullYear();
 
 <style>
   .footer {
+    /* Sin JS o con reduced-motion no hay --p: el rótulo queda asentado. */
+    --p: 1;
     position: relative;
     padding-top: clamp(4rem, 8vw, 6rem);
     border-top: 1px solid var(--c-line-dark);
+    overflow: hidden;
   }
   .footer-drip {
     position: absolute;
@@ -120,6 +139,19 @@ const year = new Date().getFullYear();
     display: grid;
     gap: 1rem;
     align-content: start;
+    justify-items: start;
+  }
+  .footer-address {
+    max-width: 30ch;
+    color: rgb(255 255 255 / 0.8);
+    font-size: var(--fs-small);
+    text-decoration: underline;
+    text-decoration-color: var(--c-lava);
+    text-underline-offset: 0.3em;
+    transition: color 0.3s;
+  }
+  .footer-address:hover {
+    color: var(--c-lava-bright);
   }
   .footer-nav ul,
   .footer-contact {
@@ -138,7 +170,9 @@ const year = new Date().getFullYear();
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: rgb(255 255 255 / 0.8);
-    transition: color 0.3s;
+    transition:
+      color 0.3s,
+      transform 0.4s var(--ease-out);
   }
   .footer-contact a {
     text-transform: none;
@@ -147,16 +181,37 @@ const year = new Date().getFullYear();
   .footer-nav a:hover,
   .footer-contact a:hover {
     color: var(--c-lava-bright);
+    transform: translateX(4px);
   }
   .footer-contact :global(.icon) {
     width: 18px;
   }
+
+  /* Logotipo tipográfico a todo el ancho que emerge al llegar al final. */
+  .footer-word {
+    display: flex;
+    justify-content: center;
+    padding-inline: var(--gutter);
+    font-size: clamp(4.5rem, 21vw, 26rem);
+    font-weight: 900;
+    font-stretch: 62%;
+    line-height: 0.76;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    user-select: none;
+    /* --p llega a ~0,45 con el pie entero en pantalla: ahí queda asentado. */
+    transform: translate3d(0, calc(max(0, 0.45 - var(--p)) * 70%), 0);
+  }
+
   .footer-base {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 1rem;
-    padding-block: 1.5rem 2rem;
+    padding-block: 1.5rem calc(2rem + env(safe-area-inset-bottom));
     border-top: 1px solid var(--c-line-dark);
     color: var(--c-ash);
     font-size: 0.75rem;
@@ -177,6 +232,12 @@ const year = new Date().getFullYear();
     }
     .footer-brand {
       grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 899px) {
+    /* Hueco para la barra fija de reserva. */
+    .footer-base {
+      padding-bottom: calc(6rem + env(safe-area-inset-bottom));
     }
   }
 </style>

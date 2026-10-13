@@ -3,6 +3,7 @@ import Base from '@/layouts/Base.astro';
 import Nav, { type NavItem } from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import StickyBooking from '@/components/StickyBooking.astro';
+import Marquee from '@/components/Marquee.astro';
 import Hero from '@/components/sections/Hero.astro';
 import About from '@/components/sections/About.astro';
 import Chapters from '@/components/sections/Chapters.astro';
@@ -31,6 +32,10 @@ const show = {
 
 const hasContact = [site.phone, site.email, site.instagram, site.mapsUrl, site.address].some((f) => f.status === 'confirmed') || SHOW_PENDING;
 
+const address = valueOf(site.address);
+const place = address ? `${address.locality}, ${site.island}` : site.island;
+const marqueeWords = ['Corte caballero', 'Degradado', 'Barba a navaja', 'Mechas', 'Decoloración', address?.locality ?? site.island];
+
 const navItems: NavItem[] = [
   { href: '#sobre', label: 'Sobre nosotros' },
   show.services && { href: '#servicios', label: 'Servicios' },
@@ -41,10 +46,11 @@ const navItems: NavItem[] = [
 ].filter((x): x is NavItem => Boolean(x));
 ---
 
-<Base title={`${site.name} · Barbería en ${site.island}`} description={site.description}>
+<Base title={`${site.name} · Barbería en ${place}`} description={site.description}>
   <Nav items={navItems} />
   <main id="contenido">
     <Hero />
+    <Marquee words={marqueeWords} />
     <About />
     {show.chapters && <Chapters />}
     {show.services && <Services />}

@@ -29,8 +29,11 @@
   --fs-body: clamp(0.95rem, 0.9rem + 0.2vw, 1.0625rem);
   --fs-lead: clamp(1.05rem, 0.95rem + 0.45vw, 1.25rem);
   --fs-h3: clamp(1.15rem, 1rem + 0.6vw, 1.5rem);
-  --fs-h2: clamp(2rem, 1.3rem + 3vw, 3.75rem);
-  --fs-display: clamp(4.25rem, 1rem + 15.5vw, 13.5rem);
+  --fs-h2: clamp(2.6rem, 1.1rem + 5.4vw, 6.4rem);
+  --fs-display: clamp(3.6rem, 0.8rem + 11.5vw, 12.5rem);
+  /* Anchos del eje wdth (62–125): cartel condensado frente a texto normal. */
+  --wd-poster: 68%;
+  --wd-tight: 82%;
 
   /* Espaciado y layout */
   --gutter: clamp(1rem, 4vw, 3.5rem);
@@ -42,4 +45,10 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-liquid: cubic-bezier(0.55, 0, 0.15, 1);
   --dur: 0.9s;
+  /* Retardo de la entrada del hero; la intro lo amplía en la primera visita. */
+  --intro-delay: 0s;
+}
+
+html.intro-on {
+  --intro-delay: 1.3s;
 }

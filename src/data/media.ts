@@ -1,4 +1,5 @@
 import type { ImageMetadata } from 'astro';
+import type { ServiceCategory } from './services';
 
 import logoPng from '@/assets/images/logo/blackport-logo.png';
 import rojoPerfilNoir from '@/assets/images/cortes/rojo-perfil-noir.jpg';
@@ -6,6 +7,9 @@ import tinteGuantesNoir from '@/assets/images/barbero/barbero-tinte-guantes-noir
 import staffNoir from '@/assets/images/barberia/staff-noir.jpg';
 import clienteRojoNoir from '@/assets/images/barbero/barbero-cliente-rojo-noir.jpg';
 import maquinaNucaNoir from '@/assets/images/cortes/maquina-nuca-rojo-noir.jpg';
+import tijeraNoir from '@/assets/images/barbero/barbero-tijera-noir.jpg';
+import mechasPapelNoir from '@/assets/images/cortes/mechas-papel-noir.jpg';
+import secadoRojoNoir from '@/assets/images/cortes/secado-rojo-noir.jpg';
 import rojoLateral from '@/assets/images/cortes/rojo-lateral.jpg';
 import espejoPuestos from '@/assets/images/barberia/espejo-puestos.jpg';
 import rojoNucaDiseno from '@/assets/images/cortes/rojo-nuca-diseno.jpg';
@@ -61,11 +65,26 @@ export const heroPhoto: Photo = {
   focus: '35% 30%',
 };
 
+/** Segunda capa del hero: detalle de corte en color, más pequeño y por delante. */
+export const heroDetail: Photo = {
+  id: 'hero-detalle',
+  category: 'corte',
+  alt: 'Nuca con degradado, línea de diseño y tinte rojo',
+  src: rojoNucaDiseno,
+  focus: '50% 40%',
+};
+
 /** Vídeo de fondo del hero. Si se añade, sustituye a la foto (que pasa a ser su poster). */
 export const heroVideo: Video = { id: 'hero', title: 'BLACKPORT', aspect: '16 / 9' };
 
 export const presentationVideo: Video = { id: 'presentacion', title: 'Vídeo de presentación', aspect: '16 / 9' };
 export const openingVideo: Video = { id: 'inauguracion', title: 'Vídeo de inauguración', aspect: '9 / 16' };
+
+/** Miniaturas incrustadas en el titular de «Sobre» (decorativas). */
+export const aboutInline: Photo[] = [
+  { id: 'inline-rojo', category: 'corte', alt: '', src: rojoLateral, focus: '55% 30%' },
+  { id: 'inline-rubio', category: 'corte', alt: '', src: decoloracionRubio, focus: '45% 55%' },
+];
 
 export const aboutPhotos: { main: Photo; detail: Photo } = {
   main: {
@@ -84,20 +103,44 @@ export const aboutPhotos: { main: Photo; detail: Photo } = {
   },
 };
 
-export const servicesPhoto: Photo = {
-  id: 'servicios',
-  category: 'barbero',
-  alt: 'Barbero repasando el corte de un cliente con el pelo rojo',
-  src: clienteRojoNoir,
-  focus: '50% 30%',
+/** Imagen que acompaña a cada grupo de la carta de servicios (ambiente, no ejemplo literal). */
+export const servicePhotos: Record<ServiceCategory, Photo> = {
+  corte: {
+    id: 'servicio-corte',
+    category: 'corte',
+    alt: 'Repaso con máquina en la nuca de un cliente con tinte rojo',
+    src: maquinaNucaNoir,
+    focus: '40% 35%',
+  },
+  combo: {
+    id: 'servicio-combo',
+    category: 'barbero',
+    alt: 'Barbero repasando el corte de un cliente con el pelo rojo',
+    src: clienteRojoNoir,
+    focus: '50% 30%',
+  },
+  barba: {
+    id: 'servicio-barba',
+    category: 'barbero',
+    alt: 'Barbero trabajando con peine y tijera frente al aro de luz',
+    src: tijeraNoir,
+    focus: '60% 35%',
+  },
+  color: {
+    id: 'servicio-color',
+    category: 'corte',
+    alt: 'Barbero aplicando mechas con papel de aluminio',
+    src: mechasPapelNoir,
+    focus: '50% 35%',
+  },
 };
 
 export const bookingPhoto: Photo = {
   id: 'reserva',
   category: 'corte',
-  alt: 'Repaso con máquina en la nuca de un cliente con tinte rojo',
-  src: maquinaNucaNoir,
-  focus: '40% 35%',
+  alt: 'Barbero secando con secador el tinte rojo de un cliente',
+  src: secadoRojoNoir,
+  focus: '55% 30%',
 };
 
 /** Orden = orden de la galería. El layout asigna tamaños por posición. */

@@ -2,6 +2,8 @@
 import Logo from './Logo.astro';
 import BookingCta from './ui/BookingCta.astro';
 import Icon from './ui/Icon.astro';
+import { site } from '@/config/site';
+import { valueOf } from '@/lib/pending';
 
 export interface NavItem {
   href: string;
@@ -13,6 +15,9 @@ interface Props {
 }
 
 const { items } = Astro.props;
+const phone = valueOf(site.phone);
+const instagram = valueOf(site.instagram);
+const address = valueOf(site.address);
 ---
 
 <header class="nav" data-nav>
@@ -26,7 +31,7 @@ const { items } = Astro.props;
         {
           items.map((it) => (
             <li>
-              <a href={it.href}>{it.label}</a>
+              <a href={it.href} data-spy>{it.label}</a>
             </li>
           ))
         }
@@ -56,7 +61,7 @@ const { items } = Astro.props;
     <ol>
       {
         items.map((it, i) => (
-          <li>
+          <li style={`--i:${i}`}>
             <a href={it.href} data-menu-link>
               <span class="menu-num">{String(i + 1).padStart(2, '0')}</span>
               <span class="menu-label">{it.label}</span>
@@ -66,6 +71,18 @@ const { items } = Astro.props;
       }
     </ol>
     <BookingCta size="lg" placement="menu" />
+    <div class="menu-contact">
+      {address && <p>{address.street}<br />{address.postalCode} {address.locality}</p>}
+      {phone && <a href={`tel:${phone.e164}`}><Icon name="phone" /> {phone.display}</a>}
+      {
+        instagram && (
+          <a href={instagram.url} target="_blank" rel="noopener noreferrer">
+            <Icon name="instagram" /> @{instagram.handle}
+            <span class="sr-only">(pestaña nueva)</span>
+          </a>
+        )
+      }
+    </div>
   </nav>
 </dialog>
 
@@ -75,11 +92,58 @@ const { items } = Astro.props;
   const openBtn = document.querySelector<HTMLButtonElement>('[data-menu-open]');
 
   if (nav) {
-    const onScroll = (): void => {
-      nav.classList.toggle('is-solid', window.scrollY > 24);
+    // Sólida al dejar el inicio; se esconde al bajar y vuelve al subir.
+    let lastY = window.scrollY;
+    let queued = false;
+    const update = (): void => {
+      queued = false;
+      const y = window.scrollY;
+      const dy = y - lastY;
+      nav.classList.toggle('is-solid', y > 24);
+      if (Math.abs(dy) > 6) {
+        const hide = dy > 0 && y > window.innerHeight * 0.6 && !nav.contains(document.activeElement);
+        nav.classList.toggle('is-hidden', hide);
+        lastY = y;
+      }
     };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(update);
+      },
+      { passive: true },
+    );
+    nav.addEventListener('focusin', () => nav.classList.remove('is-hidden'));
+    update();
+
+    // Sección activa: el enlace correspondiente queda marcado.
+    const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('[data-spy]'));
+    const byId = new Map(links.map((a) => [a.hash.slice(1), a]));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            const link = byId.get(e.target.id);
+            if (!link || !e.isIntersecting) continue;
+            links.forEach((a) => a.removeAttribute('aria-current'));
+            link.setAttribute('aria-current', 'location');
+          }
+        },
+        { rootMargin: '-45% 0px -50% 0px' },
+      );
+      byId.forEach((_, id) => {
+        const el = document.getElementById(id);
+        if (el) io.observe(el);
+      });
+      const hero = document.getElementById('inicio');
+      if (hero) {
+        new IntersectionObserver(([e]) => {
+          if (e.isIntersecting) links.forEach((a) => a.removeAttribute('aria-current'));
+        }, { rootMargin: '-45% 0px -50% 0px' }).observe(hero);
+      }
+    }
   }
 
   if (menu && openBtn) {
@@ -110,7 +174,10 @@ const { items } = Astro.props;
     transition:
       background-color 0.4s var(--ease-out),
       box-shadow 0.4s var(--ease-out),
-      height 0.4s var(--ease-out);
+      transform 0.5s var(--ease-out);
+  }
+  .nav.is-hidden {
+    transform: translateY(-100%);
   }
   .nav::before {
     /* Degradado de legibilidad sobre el hero, antes de solidificarse. */
@@ -122,13 +189,15 @@ const { items } = Astro.props;
     transition: opacity 0.4s;
   }
   .nav.is-solid {
-    background: rgb(9 9 9 / 0.94);
+    background: rgb(9 9 9 / 0.82);
+    backdrop-filter: blur(14px) saturate(1.2);
     box-shadow: 0 1px 0 var(--c-line-dark);
   }
   .nav.is-solid::before {
     opacity: 0;
   }
   .nav-inner {
+    max-width: none;
     position: relative;
     height: 100%;
     display: flex;
@@ -169,10 +238,12 @@ const { items } = Astro.props;
     transform-origin: right;
     transition: transform 0.4s var(--ease-out);
   }
-  .nav-links a:hover {
+  .nav-links a:hover,
+  .nav-links a[aria-current] {
     opacity: 1;
   }
-  .nav-links a:hover::after {
+  .nav-links a:hover::after,
+  .nav-links a[aria-current]::after {
     transform: scaleX(1);
     transform-origin: left;
   }
@@ -204,14 +275,6 @@ const { items } = Astro.props;
     justify-self: end;
   }
 
-  /* En escritorio el hero ya muestra el logo: el de la barra aparece al hacer scroll. */
-  @media (min-width: 900px) {
-    .nav:not(.is-solid) .nav-logo {
-      opacity: 0;
-      visibility: hidden;
-    }
-  }
-
   @media (max-width: 1023px) {
     .nav-links,
     .nav-cta {
@@ -241,12 +304,25 @@ const { items } = Astro.props;
   .menu[open] {
     display: flex;
     flex-direction: column;
-    animation: menu-in 0.45s var(--ease-out);
+    animation: menu-in 0.6s var(--ease-liquid);
   }
+  /* Cortina desde arriba; los enlaces entran escalonados. */
   @keyframes menu-in {
     from {
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  .menu[open] li {
+    animation: menu-item 0.7s var(--ease-out) both;
+    animation-delay: calc(0.18s + var(--i, 0) * 0.06s);
+  }
+  @keyframes menu-item {
+    from {
       opacity: 0;
-      transform: translateY(-12px);
+      transform: translateY(24px);
     }
   }
   .menu-top {
@@ -275,7 +351,7 @@ const { items } = Astro.props;
   .menu-body ol {
     display: grid;
   }
-  .menu-body a {
+  .menu-body ol a {
     display: flex;
     align-items: baseline;
     gap: 1rem;
@@ -289,10 +365,37 @@ const { items } = Astro.props;
     letter-spacing: 0.1em;
   }
   .menu-label {
-    font-size: clamp(1.8rem, 8vw, 2.6rem);
-    font-weight: 700;
-    font-stretch: 92%;
+    font-size: clamp(2.2rem, 11vw, 3.4rem);
+    font-weight: 820;
+    font-stretch: var(--wd-poster);
     text-transform: uppercase;
-    line-height: 1.1;
+    line-height: 1;
+    transition: color 0.3s, transform 0.4s var(--ease-out);
+  }
+  .menu-body ol a:hover .menu-label,
+  .menu-body ol a:focus-visible .menu-label {
+    color: var(--c-lava-bright);
+    transform: translateX(6px);
+  }
+  .menu-contact {
+    display: grid;
+    gap: 0.4rem;
+    color: var(--c-ash);
+    font-size: var(--fs-small);
+  }
+  .menu-contact p {
+    margin-bottom: 0.4rem;
+  }
+  .menu-contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 40px;
+    color: var(--c-white);
+    font-weight: 600;
+  }
+  .menu-contact :global(.icon) {
+    width: 18px;
+    color: var(--c-lava-bright);
   }
 </style>
